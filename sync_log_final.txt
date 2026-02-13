@@ -1,0 +1,49 @@
+
+-------------------------------------------------------------------------------
+   ROBOCOPY     ::     Robust File Copy for Windows                              
+-------------------------------------------------------------------------------
+
+  Started : Sunday, 8 February 2026 12:51:12 pm
+   Source : c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\
+     Dest : E:\PharmaQMS-Vue\app\src\
+
+    Files : *.*
+	    
+  Options : *.* /TEE /S /E /DCOPY:DA /COPY:DAT /Z /NP /R:2 /W:5 
+
+------------------------------------------------------------------------------
+
+	                   5	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\
+	                   0	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\
+	                   4	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\dashboard\
+	                   3	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\layout\
+	                   1	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\maintenance\
+	                   2	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\products\
+	                   2	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\quality\
+	                   3	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\security\
+	                   2	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\testing\
+	                  53	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\components\ui\
+	                   4	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\data\
+	    Newer     		   25991	mfrData.ts
+	                   3	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\hooks\
+	                   1	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\lib\
+	                   0	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\locales\
+	                   1	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\locales\ar\
+	                   1	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\locales\en\
+	                  20	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\pages\
+	                   2	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\services\
+	                   1	c:\Users\lenovo\OneDrive\Desktop\PharmaQMS-Vue\app\src\types\
+
+------------------------------------------------------------------------------
+
+               Total    Copied   Skipped  Mismatch    FAILED    Extras
+    Dirs :        19         0        19         0         0         0
+   Files :       108         1       107         0         0         0
+   Bytes :   838.1 k    25.3 k   812.7 k         0         0         0
+   Times :   0:00:00   0:00:00                       0:00:00   0:00:00
+
+
+   Speed :           12,995,500 Bytes/sec.
+   Speed :              743.608 MegaBytes/min.
+   Ended : Sunday, 8 February 2026 12:51:12 pm
+
