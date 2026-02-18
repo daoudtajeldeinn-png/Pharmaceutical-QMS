@@ -336,7 +336,7 @@ This is a proprietary system. For contributions or issues, contact the developme
 
 ### Technical Support
 - **Developer:** Dr. Daoud Tajeldeinn Ahmed
-- **Email:** [daoudtajeldeinn113@gmail.com]
+- **Email:** [Contact through system]
 - **Documentation:** See USER_GUIDE.md
 
 ### For Users
@@ -393,10 +393,10 @@ This software is protected by copyright law and international treaties. Unauthor
 Dr. Daoud Tajeldeinn Ahmed
 
 **Organization:**
-[Sudanese Chemical Industeries]
+[Your Organization Name]
 
 **Location:**
-[Khartoum -Sudan]
+[Your Location]
 
 ---
 
@@ -407,4 +407,3 @@ Dr. Daoud Tajeldeinn Ahmed
 ---
 
 *Last Updated: February 4, 2026*
-
