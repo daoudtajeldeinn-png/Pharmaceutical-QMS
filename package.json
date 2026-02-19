@@ -1,0 +1,31 @@
+{
+  "name": "pharmaceutical-qms",
+  "version": "1.0.0",
+  "description": "Pharmaceutical Quality Management System",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Build not configured'",
+    "test": "echo 'Tests not configured'",
+    "lint": "echo 'Linting not configured'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daoudtajeldeinn-png/Pharmaceutical-QMS.git"
+  },
+  "keywords": [
+    "pharmaceutical",
+    "qms",
+    "quality",
+    "gmp",
+    "django"
+  ],
+  "author": "Daoud Tajeldeinn Ahmed",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/daoudtajeldeinn-png/Pharmaceutical-QMS/issues"
+  },
+  "homepage": "https://daoudtajeldeinn-png.github.io/Pharmaceutical-QMS/",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

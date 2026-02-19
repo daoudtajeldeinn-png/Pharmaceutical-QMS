@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgres://user:pass@db:5432/qms_db
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    command: python manage.py runserver 0.0.0.0:8000
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=qms_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
