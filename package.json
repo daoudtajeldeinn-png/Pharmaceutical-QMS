@@ -15,7 +15,7 @@
     "build": "npm run build:app && node -e \"require('fs').cpSync('app/dist', 'dist', {recursive:true, force:true})\"",
     "vercel-build": "npm run build",
     "build:app": "cd app && npm install && npm run build",
-    "electron:build": "npm run build:app && electron-builder",
+    "electron:build": "npm run build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "build": {
