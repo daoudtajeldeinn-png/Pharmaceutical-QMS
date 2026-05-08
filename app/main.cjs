@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
@@ -35,6 +35,7 @@ function getMachineId() {
 
 const MACHINE_ID = getMachineId();
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+let mainWindow;
 
 // Load environment variables only in development
 if (isDev) {
@@ -46,7 +47,7 @@ if (isDev) {
 }
 
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -61,7 +62,7 @@ function createWindow() {
 
   // DevTools: open only in development builds
   if (isDev) {
-    win.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   }
 
   const template = [
@@ -96,8 +97,8 @@ function createWindow() {
   Menu.setApplicationMenu(menu);
 
   if (isDev) {
-    win.loadURL('http://localhost:5173');
-    win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
       console.log('Load failed:', errorDescription, validatedURL);
     });
   } else {
@@ -106,13 +107,13 @@ function createWindow() {
     const indexPath = path.join(appPath, 'dist', 'index.html');
     
     if (fs.existsSync(indexPath)) {
-        win.loadFile(indexPath).catch(err => {
+        mainWindow.loadFile(indexPath).catch(err => {
             dialog.showErrorBox('Load Error', `Failed to load index.html: ${err.message}`);
         });
     } else {
         const fallbackPath = path.join(__dirname, 'dist', 'index.html');
         if (fs.existsSync(fallbackPath)) {
-            win.loadFile(fallbackPath);
+            mainWindow.loadFile(fallbackPath);
         } else {
             dialog.showErrorBox('Path Error', 
                 `Could not find index.html!\n\nChecked:\n1. ${indexPath}\n2. ${fallbackPath}`
@@ -125,13 +126,29 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
   
-  // Check for updates
+  // Check for updates automatically
   if (!isDev) {
     autoUpdater.checkForUpdatesAndNotify();
   }
 });
 
+// IPC Listeners for manual update control
+ipcMain.on('check-for-update', () => {
+  if (!isDev) {
+    autoUpdater.checkForUpdates();
+  } else {
+    mainWindow.webContents.send('update-not-available');
+  }
+});
+
+ipcMain.on('quit-and-install', () => {
+  autoUpdater.quitAndInstall(false, true);
+});
+
 autoUpdater.on('update-available', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-available');
+  }
   dialog.showMessageBox({
     type: 'info',
     title: 'Update Available',
@@ -139,7 +156,16 @@ autoUpdater.on('update-available', () => {
   });
 });
 
+autoUpdater.on('update-not-available', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-not-available');
+  }
+});
+
 autoUpdater.on('update-downloaded', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-downloaded');
+  }
   dialog.showMessageBox({
     type: 'info',
     title: 'Update Ready',
@@ -154,6 +180,9 @@ autoUpdater.on('update-downloaded', () => {
 
 autoUpdater.on('error', (err) => {
   console.error('Error in auto-updater: ', err);
+  if (mainWindow) {
+    mainWindow.webContents.send('update-error', err.message);
+  }
 });
 
 app.on('window-all-closed', () => {
