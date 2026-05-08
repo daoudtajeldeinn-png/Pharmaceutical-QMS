@@ -16,12 +16,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # Upgraded from 18 to support Vite 7 and Supabase components
+          node-version: 22
 
       - name: Install Dependencies
         run: npm install
 
       - name: Build and Publish Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required to publish to GitHub Releases
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: electron-builder
         run: npm run electron:build -- --publish always
