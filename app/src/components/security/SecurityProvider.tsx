@@ -522,7 +522,6 @@ export function LoginPage({ forcedLicenseLock = false }: { forcedLicenseLock?: b
                   </div>
                   <div>
                     <h4 className="text-sm font-black text-white uppercase tracking-wider">System Certification</h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">PharmaQMS Enterprise v4.2.14-stable</p>
                     <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Enter your organization's cryptographic activation key to unlock the GxP environment.</p>
                   </div>
                 </div>
@@ -578,7 +577,7 @@ export function LoginPage({ forcedLicenseLock = false }: { forcedLicenseLock?: b
           {!import.meta.env.DEV && (
             <div className="mt-12 pt-12 border-t border-white/5 text-center">
               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-700">
-                PharmaQMS Enterprise v4.2.13 • Licensed Production Environment
+                PharmaQMS Enterprise v4.2.15 • Licensed Production Environment
               </p>
             </div>
           )}
