@@ -126,6 +126,35 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 // Main App Layout
 function AppLayout() {
+  const { user } = useSecurity();
+  const { status } = useLicense();
+
+  // Background Sync on App Load
+  useEffect(() => {
+    const performBackgroundSync = async () => {
+      if (user && status.isValid) {
+        console.log('AppLayout: Initializing background cloud synchronization...');
+        try {
+          const { syncAllTables } = await import('@/services/CloudSyncService');
+          const result = await syncAllTables();
+          console.log(`AppLayout: Background sync complete. Success: ${result.successCount}, Fail: ${result.failCount}`);
+          
+          if (result.successCount > 0) {
+            // We don't want to reload the page automatically here as it might cause loops
+            // But the next time they navigate or if we had a global refresh, they'd see the data.
+            // For now, logging it is enough for the dev console, and the manual sync is there for explicit refresh.
+          }
+        } catch (e) {
+          console.error('AppLayout: Background sync failed', e);
+        }
+      }
+    };
+
+    // Delay background sync slightly to prioritize initial render
+    const timer = setTimeout(performBackgroundSync, 3000);
+    return () => clearTimeout(timer);
+  }, [user?.id, status.isValid]);
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Sidebar />
