@@ -564,7 +564,7 @@ export function SettingsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-slate-500 font-medium">Installed Version</p>
-                    <p className="text-xl font-black text-slate-900 tracking-tight">v4.2.15</p>
+                    <p className="text-xl font-black text-slate-900 tracking-tight">v4.2.17</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -858,7 +858,7 @@ export function SettingsPage() {
             </div>
             <div className="text-right">
               <p className="text-sm text-slate-600 font-bold">Release Build</p>
-              <p className="text-lg font-black text-blue-900">v4.2.13-stable</p>
+              <p className="text-lg font-black text-blue-900">v4.2.17-stable</p>
               <p className="text-xs text-slate-500">© 2024-2026 All Rights Reserved</p>
             </div>
           </div>

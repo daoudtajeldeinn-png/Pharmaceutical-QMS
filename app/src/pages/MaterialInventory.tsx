@@ -258,8 +258,13 @@ const [materialForm, setMaterialForm] = useState({
 
   const formatDate = (date: Date | string | undefined) => {
     if (!date) return '';
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('en-GB');
+    try {
+      const d = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(d.getTime())) return String(date);
+      return d.toLocaleDateString('en-GB');
+    } catch (e) {
+      return String(date);
+    }
   };
 
   return (
@@ -404,7 +409,7 @@ const [materialForm, setMaterialForm] = useState({
                 <div className="flex justify-between">
                   <span className="text-slate-500">تاريخ الانتهاء:</span>
                   <span className={new Date(material.expiryDate) < new Date() ? 'text-red-600 font-bold' : ''}>
-                    {material.expiryDate}
+                    {typeof material.expiryDate === 'object' ? (material.expiryDate as any).toLocaleDateString() : material.expiryDate}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
@@ -705,7 +710,7 @@ const [materialForm, setMaterialForm] = useState({
                       <div className="flex justify-between">
                         <span className="text-slate-500">Expiry Date:</span>
                         <span className={new Date(selectedMaterial.expiryDate) < new Date() ? 'text-red-600 font-bold' : ''}>
-                          {selectedMaterial.expiryDate}
+                          {typeof selectedMaterial.expiryDate === 'object' ? (selectedMaterial.expiryDate as any).toLocaleDateString() : selectedMaterial.expiryDate}
                         </span>
                       </div>
                       <div className="flex justify-between">

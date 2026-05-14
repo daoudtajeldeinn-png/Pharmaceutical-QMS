@@ -198,7 +198,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
                   </div>
                   <p className="text-xs text-slate-500 leading-relaxed">{notification.message}</p>
                   <span className="text-[9px] font-bold text-slate-400 uppercase mt-1">
-                    {notification.created_at ? new Date(notification.created_at).toLocaleString() : notification.time || 'Just now'}
+                    {notification.created_at ? new Date(notification.created_at).toLocaleString() : (typeof notification.time === 'object' ? notification.time.toLocaleString() : (notification.time || 'Just now'))}
                   </span>
                 </DropdownMenuItem>
               ))}

@@ -336,7 +336,7 @@ export function LaboratoryPage() {
                         </TableCell>
                         <TableCell>
                           <span className={cn("text-sm transition-colors", expiryStatus.color)}>
-                            {new Date(std.expiryDate).toLocaleDateString('en-GB')}
+                            {typeof std.expiryDate === 'object' ? (std.expiryDate as any).toLocaleDateString('en-GB') : new Date(std.expiryDate).toLocaleDateString('en-GB')}
                           </span>
                         </TableCell>
                         <TableCell>
