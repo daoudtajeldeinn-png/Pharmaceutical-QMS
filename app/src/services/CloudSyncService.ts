@@ -49,7 +49,9 @@ export async function syncAllTables() {
                 const dataToPush = localData.map((item: any) => {
                     const cleanItem = { ...item };
                     for (const key in cleanItem) {
-                        if (cleanItem[key] instanceof Date) {
+                        const dateKeys = ['date', 'time', 'timestamp', 'at', 'expiry', 'next', 'schedule', 'created', 'updated', 'lastLogin'];
+                        const isDateKey = dateKeys.some(dk => key.toLowerCase().includes(dk));
+                        if (isDateKey && cleanItem[key] instanceof Date) {
                             cleanItem[key] = cleanItem[key].toISOString();
                         }
                     }
@@ -80,9 +82,11 @@ export async function syncAllTables() {
                 const processedData = remoteData.map((item: any) => {
                     const cleanItem = { ...item };
                     for (const key in cleanItem) {
-                        const val = cleanItem[key];
-                        // Robust check for ISO date strings
-                        if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+                        // Robust check for ISO date strings - Only for keys likely to be dates
+                        const dateKeys = ['date', 'time', 'timestamp', 'at', 'expiry', 'next', 'schedule', 'created', 'updated', 'lastLogin'];
+                        const isDateKey = dateKeys.some(dk => key.toLowerCase().includes(dk));
+                        
+                        if (isDateKey && typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
                             const dateVal = new Date(val);
                             if (!isNaN(dateVal.getTime())) {
                                 cleanItem[key] = dateVal;
