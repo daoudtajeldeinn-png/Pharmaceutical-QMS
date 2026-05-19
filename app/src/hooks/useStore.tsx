@@ -1,7 +1,6 @@
 import { createContext, useContext, useReducer, type ReactNode, useEffect } from 'react';
 import { appReducerWithPersistence, initialState, type AppState, type Action } from './storeReducer';
 import { db } from '../db/db';
-
 // ==================== Context ====================
 interface StoreContextType {
   state: AppState;
@@ -71,9 +70,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           db.masterFormulas.toArray(),
         ]);
 
-        // Convert MFR array to Record object
+        // Convert MFR array to Record object (filtering out soft deleted ones)
         const mfrRecord: Record<string, any> = {};
-        dbMFRs.forEach(mfr => { mfrRecord[mfr.id] = mfr; });
+        dbMFRs.forEach(mfr => {
+          if (!mfr.deleted_at) {
+            mfrRecord[mfr.id] = mfr;
+          }
+        });
 
         // MIGRATION: Ensure all initial sample MFRs are in the database
         const missingMFRs = Object.values(initialState.masterFormulas).filter(m => !mfrRecord[m.id]);
@@ -92,32 +95,35 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           batchRecords.push(...missingBMRs);
         }
 
+        // Helper to filter out soft-deleted records
+        const filterActive = (arr: any[]) => arr.filter(item => !item || !item.deleted_at);
+
         // Dispatch all loaded data to state
         dispatch({
           type: 'LOAD_DB_DATA', payload: {
-            products,
-            testMethods,
-            testResults,
-            capas,
-            deviations,
-            equipment,
-            chemicalReagents,
-            referenceStandards,
-            qualitySystems,
-            trainingRecords,
-            audits,
-            suppliers,
-            changeControls,
-            marketComplaints,
-            productRecalls,
-            stabilityProtocols,
-            ipqcChecks,
-            coaRecords,
-            batchRecords,
-            rawMaterials,
-            activities,
-            materialMovements,
-            reconciliationRecords,
+            products: filterActive(products),
+            testMethods: filterActive(testMethods),
+            testResults: filterActive(testResults),
+            capas: filterActive(capas),
+            deviations: filterActive(deviations),
+            equipment: filterActive(equipment),
+            chemicalReagents: filterActive(chemicalReagents),
+            referenceStandards: filterActive(referenceStandards),
+            qualitySystems: filterActive(qualitySystems),
+            trainingRecords: filterActive(trainingRecords),
+            audits: filterActive(audits),
+            suppliers: filterActive(suppliers),
+            changeControls: filterActive(changeControls),
+            marketComplaints: filterActive(marketComplaints),
+            productRecalls: filterActive(productRecalls),
+            stabilityProtocols: filterActive(stabilityProtocols),
+            ipqcChecks: filterActive(ipqcChecks),
+            coaRecords: filterActive(coaRecords),
+            batchRecords: filterActive(batchRecords),
+            rawMaterials: filterActive(rawMaterials),
+            activities, // Activities are audit logs, do not filter soft-deleted
+            materialMovements: filterActive(materialMovements),
+            reconciliationRecords: filterActive(reconciliationRecords),
             masterFormulas: mfrRecord,
           }
         });

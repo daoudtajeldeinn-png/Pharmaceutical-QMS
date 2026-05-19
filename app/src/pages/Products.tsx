@@ -11,16 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { DeleteConfirmationDialog } from '@/components/security/DeleteConfirmationDialog';
 import { Plus, Pill, ShieldAlert } from 'lucide-react';
 import type { PharmaceuticalProduct } from '@/types';
 
@@ -43,7 +34,7 @@ export function Products() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (product: PharmaceuticalProduct) => {
+  const handleDeleteClick = (product: PharmaceuticalProduct) => {
     if (!canDelete) {
       return; // Button is hidden for non-admins, but guard anyway
     }
@@ -51,7 +42,7 @@ export function Products() {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (reason: string) => {
     if (!selectedProduct) return;
     const success = await handleDelete(
       'products',
@@ -64,12 +55,13 @@ export function Products() {
           payload: {
             id: crypto.randomUUID(),
             type: 'Product_Updated',
-            description: `[DELETE] Product: "${selectedProduct.name}" by ${user?.username}`,
+            description: `[DELETE] Product: "${selectedProduct.name}" by ${user?.username}. Reason: ${reason}`,
             user: user?.name || 'Unknown',
             timestamp: new Date(),
           },
         });
-      }
+      },
+      reason
     );
     if (success) {
       setIsDeleteDialogOpen(false);
@@ -146,7 +138,7 @@ export function Products() {
       <ProductTable
         products={state.products}
         onEdit={handleEdit}
-        onDelete={canDelete ? handleDelete : undefined}
+        onDelete={canDelete ? handleDeleteClick : undefined}
         onView={handleView}
         onTest={handleTest}
       />
@@ -233,34 +225,15 @@ export function Products() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-red-600 flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5" />
-              Confirm Permanent Deletion
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to permanently delete product &quot;{selectedProduct?.name}&quot;.
-              <br />
-              <strong>This record will be removed from the local database AND the Supabase cloud.</strong>
-              <br /><br />
-              This action is logged under your account: <strong>{user?.name} ({user?.username})</strong>.
-              Recovery requires Admin authorization.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-600"
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {selectedProduct && (
+        <DeleteConfirmationDialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+          recordLabel={selectedProduct.name}
+          tableName="products"
+        />
+      )}
     </div>
   );
 }

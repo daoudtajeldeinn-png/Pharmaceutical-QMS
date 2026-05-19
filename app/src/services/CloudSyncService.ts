@@ -57,6 +57,13 @@ export async function syncAllTables() {
             const { getDeletedIds } = await import('./DeletedRecordsService');
             const deletedIds = getDeletedIds(tableName);
 
+            // Clean up locally deleted records from Dexie so deletion propagates locally
+            if (deletedIds.size > 0) {
+                for (const idToDelete of Array.from(deletedIds)) {
+                    await (db as any)[tableName].delete(idToDelete);
+                }
+            }
+
             const allLocalData = await (db as any)[tableName].toArray();
             const localData = deletedIds.size > 0
                 ? allLocalData.filter((item: any) => !deletedIds.has(item.id))

@@ -33,10 +33,12 @@ import { cn } from '@/lib/utils';
 import { useSecurity } from '@/components/security/SecurityProvider';
 import { SignatureModal } from '@/components/security/SignatureModal';
 import { toast } from 'sonner';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 export function DeviationsPage() {
   const { state, dispatch } = useStore();
   const { user } = useSecurity();
+  const { canModify, canDelete } = useRoleAccess();
   // Local state for immediate feedback
   const [localDeviations, setLocalDeviations] = useState<Deviation[]>(state.deviations);
 
@@ -60,6 +62,10 @@ export function DeviationsPage() {
   });
 
   const handleCloseDeviation = (deviation: Deviation) => {
+    if (!canModify) {
+      toast.error('Access Denied: Only IT Admin or QA Admin can perform this action.');
+      return;
+    }
     setPendingCloseDeviation(deviation);
     setIsSignatureOpen(true);
   };
@@ -96,6 +102,10 @@ export function DeviationsPage() {
   };
 
   const handleDeleteDeviation = (id: string) => {
+    if (!canDelete) {
+      toast.error('Access Denied: Only IT Admin or QA Admin can perform this action.');
+      return;
+    }
     if (window.confirm('Are you sure you want to delete this deviation record?')) {
       dispatch({ type: 'DELETE_DEVIATION', payload: id });
       setLocalDeviations(prev => prev.filter(d => d.id !== id));
@@ -105,6 +115,10 @@ export function DeviationsPage() {
 
   const handleSaveDeviation = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!canModify) {
+      toast.error('Access Denied: Only IT Admin or QA Admin can perform this action.');
+      return;
+    }
     const formData = new FormData(e.currentTarget);
 
     const newDeviation: Deviation = {
@@ -166,10 +180,12 @@ export function DeviationsPage() {
           <h1 className="text-2xl font-bold text-slate-900">Process Deviations & Non-Conformities</h1>
           <p className="text-slate-500">Managing System Deviations, Root Cause Analysis & Lifecycle</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)} className="bg-red-600 hover:bg-red-700 animate-pulse">
-          <Plus className="mr-2 h-4 w-4" />
-          Log New Deviation
-        </Button>
+        {canModify && (
+          <Button onClick={() => setIsFormOpen(true)} className="bg-red-600 hover:bg-red-700 animate-pulse">
+            <Plus className="mr-2 h-4 w-4" />
+            Log New Deviation
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -286,7 +302,7 @@ export function DeviationsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      {deviation.status !== 'Closed' && (
+                      {canModify && deviation.status !== 'Closed' && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -300,7 +316,7 @@ export function DeviationsPage() {
                           <CheckCircle className="h-4 w-4" />
                         </Button>
                       )}
-                      {user?.role === 'admin' && (
+                      {canDelete && (
                         <Button
                           variant="ghost"
                           size="icon"

@@ -41,6 +41,7 @@ import { DataTableActions } from '@/components/ui/data-table-actions';
 export function Testing() {
   const { state, dispatch } = useStore();
   const [activeTab, setActiveTab] = useState('results');
+
   const [searchParams] = useSearchParams();
   const productId = searchParams.get('productId');
   const product = (state.products || []).find(p => p.id === productId) || null;
@@ -54,6 +55,8 @@ export function Testing() {
 
   const location = useLocation();
   const navigate = useNavigate();
+
+
 
   // Sync tab with URL
   useEffect(() => {

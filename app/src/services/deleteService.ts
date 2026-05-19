@@ -90,7 +90,8 @@ export async function deleteRecord(
   user: User,
   tableName: keyof typeof TABLE_MAP,
   recordId: string,
-  recordLabel: string
+  recordLabel: string,
+  reason: string = 'User requested deletion'
 ): Promise<DeleteResult> {
   // Permission check
   const canDelete =
@@ -103,37 +104,25 @@ export async function deleteRecord(
     };
   }
 
-  // 1. Write audit log BEFORE deleting (GxP requirement)
-  await writeAuditLog(user, 'DELETE', tableName, recordId, recordLabel);
-
-  // 2. Delete from local Dexie DB
   try {
-    await (db as any)[tableName].delete(recordId);
-  } catch (err: any) {
-    return { success: false, error: `Local delete failed: ${err.message}` };
-  }
+    const { SoftDeleteService } = await import('./SoftDeleteService');
+    const result = await SoftDeleteService.softDelete(
+      tableName,
+      recordId,
+      user.id,
+      user.username || user.name,
+      user.role,
+      reason
+    );
 
-  // 3. Delete from Supabase
-  let cloudDeleted = false;
-  const supabaseTable = TABLE_MAP[tableName];
-  if (supabaseTable) {
-    try {
-      const { error } = await supabase
-        .from(supabaseTable)
-        .delete()
-        .eq('id', recordId);
-
-      if (error) {
-        console.warn(`deleteService: Supabase delete failed for ${supabaseTable}:`, error);
-      } else {
-        cloudDeleted = true;
-      }
-    } catch (err) {
-      console.warn('deleteService: Supabase delete exception:', err);
+    if (!result.success) {
+      return { success: false, error: result.error || 'Delete failed.' };
     }
-  }
 
-  return { success: true, cloudDeleted };
+    return { success: true, cloudDeleted: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Delete operation error.' };
+  }
 }
 
 /**

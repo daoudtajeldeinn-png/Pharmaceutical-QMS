@@ -12,6 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/hooks/useStore';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useDelete } from '@/hooks/useDelete';
+import { DeleteConfirmationDialog } from '@/components/security/DeleteConfirmationDialog';
 import { MATERIAL_TYPES, PHARMACOPEIA_TESTS } from '@/lib/constants';
 import { g1Monographs } from '@/data/g1Data';
 import { generateCOA, generateCOAPDF, generateInventoryReportPDF } from '@/lib/coaExport';
@@ -20,9 +22,88 @@ import type { RawMaterial, MaterialTest, MaterialMovement } from '@/types';
 export default function MaterialInventory() {
   const { state, dispatch } = useStore();
   const { canModify, canDelete, user } = useRoleAccess();
+  const { handleDelete, isDeleting } = useDelete();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedMovement, setSelectedMovement] = useState<MaterialMovement | null>(null);
+  const [isDeleteMovementOpen, setIsDeleteMovementOpen] = useState(false);
   const materials = state.rawMaterials;
   const [isNewMaterialOpen, setIsNewMaterialOpen] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<RawMaterial | null>(null);
+
+  const confirmDeleteMaterial = async (reason: string) => {
+    if (!selectedMaterial) return;
+    const success = await handleDelete(
+      'rawMaterials',
+      selectedMaterial.id,
+      selectedMaterial.name,
+      () => {
+        dispatch({ type: 'DELETE_RAW_MATERIAL', payload: selectedMaterial.id });
+        dispatch({
+          type: 'ADD_ACTIVITY',
+          payload: {
+            id: crypto.randomUUID(),
+            type: 'Material_Updated',
+            description: `[DELETE] Material Batch: "${selectedMaterial.name}" (Batch: ${selectedMaterial.batchNumber}) by ${user?.username || 'admin'}. Reason: ${reason}`,
+            user: user?.name || 'Unknown',
+            timestamp: new Date(),
+          },
+        });
+      },
+      reason
+    );
+    if (success) {
+      setSelectedMaterial(null);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleDeleteMovementClick = (mov: MaterialMovement) => {
+    if (!canDelete) return;
+    setSelectedMovement(mov);
+    setIsDeleteMovementOpen(true);
+  };
+
+  const confirmDeleteMovement = async (reason: string) => {
+    if (!selectedMovement || !selectedMaterial) return;
+    const success = await handleDelete(
+      'materialMovements',
+      selectedMovement.id,
+      `${selectedMovement.type} movement of ${selectedMovement.quantity} ${selectedMovement.unit}`,
+      () => {
+        let newQty = selectedMaterial.quantity;
+        if (selectedMovement.type === 'Dispensing' || selectedMovement.type === 'Sample') {
+          newQty += selectedMovement.quantity;
+        } else {
+          newQty -= selectedMovement.quantity;
+        }
+
+        const updatedMaterial = {
+          ...selectedMaterial,
+          quantity: Math.max(0, newQty)
+        };
+
+        dispatch({ type: 'DELETE_MATERIAL_MOVEMENT', payload: selectedMovement.id });
+        dispatch({ type: 'UPDATE_RAW_MATERIAL', payload: updatedMaterial });
+        setSelectedMaterial(updatedMaterial);
+
+        dispatch({
+          type: 'ADD_ACTIVITY',
+          payload: {
+            id: crypto.randomUUID(),
+            type: 'Material_Updated',
+            description: `[DELETE] Movement Record: Reverted ${selectedMovement.type} of ${selectedMovement.quantity} ${selectedMovement.unit} for "${selectedMaterial.name}" by ${user?.username || 'admin'}. Reason: ${reason}`,
+            user: user?.name || 'Unknown',
+            timestamp: new Date(),
+          },
+        });
+      },
+      reason
+    );
+    if (success) {
+      setSelectedMovement(null);
+      setIsDeleteMovementOpen(false);
+    }
+  };
   const [activeTab, setActiveTab] = useState('info');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -693,6 +774,18 @@ const [materialForm, setMaterialForm] = useState({
                     <FileText className="h-4 w-4 mr-2" />
                     PDF Report
                   </Button>
+                  {canDelete && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      disabled={isDeleting}
+                      className="gap-2 font-bold"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete Batch
+                    </Button>
+                  )}
                   <Badge
                     className="text-lg px-3 py-1"
                     variant={selectedMaterial.status === 'Approved' ? 'default' : selectedMaterial.status === 'Rejected' ? 'destructive' : 'secondary'}
@@ -914,6 +1007,7 @@ const [materialForm, setMaterialForm] = useState({
                         <th className="px-4 py-2 text-left">Quantity</th>
                         <th className="px-4 py-2 text-left">Ref Batch ID</th>
                         <th className="px-4 py-2 text-left">Officer</th>
+                        {canDelete && <th className="px-4 py-2 text-right">Actions</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -935,11 +1029,23 @@ const [materialForm, setMaterialForm] = useState({
                           </td>
                           <td className="px-4 py-2 text-slate-500">{mov.batchId || '-'}</td>
                           <td className="px-4 py-2 text-xs">{mov.operator}</td>
+                          {canDelete && (
+                            <td className="px-4 py-2 text-right">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                onClick={() => handleDeleteMovementClick(mov)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                       {materialMovements.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                          <td colSpan={canDelete ? 6 : 5} className="px-4 py-8 text-center text-slate-400">
                             No movements recorded for this material yet.
                           </td>
                         </tr>
@@ -1047,6 +1153,22 @@ const [materialForm, setMaterialForm] = useState({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteMaterial}
+        recordName={selectedMaterial?.name || ''}
+        isDeleting={isDeleting}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={isDeleteMovementOpen}
+        onClose={() => setIsDeleteMovementOpen(false)}
+        onConfirm={confirmDeleteMovement}
+        recordName={selectedMovement ? `${selectedMovement.type} movement of ${selectedMovement.quantity} ${selectedMovement.unit}` : ''}
+        isDeleting={isDeleting}
+      />
     </div >
   );
 }

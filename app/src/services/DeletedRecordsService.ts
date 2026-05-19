@@ -179,3 +179,25 @@ export async function recoverRecord(
 
   return local[idx];
 }
+
+/**
+ * Admin-only: permanently delete/purge a tombstone.
+ */
+export async function purgeTombstone(
+  tableName: string,
+  recordId: string
+): Promise<void> {
+  const local = loadLocalTombstones();
+  const filtered = local.filter(t => !(t.id === recordId && t.tableName === tableName));
+  saveLocalTombstones(filtered);
+
+  // Remove tombstone from cloud
+  try {
+    await supabase
+      .from(CLOUD_TABLE)
+      .delete()
+      .eq('id', `${tableName}__${recordId}`);
+  } catch (err) {
+    console.warn('DeletedRecordsService: Could not purge tombstone from cloud:', err);
+  }
+}

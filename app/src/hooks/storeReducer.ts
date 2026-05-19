@@ -492,25 +492,25 @@ export function appReducerWithPersistence(state: AppState, action: Action): AppS
         case 'ADD_PRODUCT': case 'UPDATE_PRODUCT':
             db.products.put(action.payload); break;
         case 'DELETE_PRODUCT':
-            db.products.delete(action.payload); break;
+            break;
         case 'ADD_TEST_METHOD': case 'UPDATE_TEST_METHOD':
             db.testMethods.put(action.payload); break;
         case 'DELETE_TEST_METHOD':
-            db.testMethods.delete(action.payload); break;
+            break;
         case 'ADD_TEST_RESULT': case 'UPDATE_TEST_RESULT':
             db.testResults.put(action.payload); break;
         case 'DELETE_TEST_RESULT':
-            db.testResults.delete(action.payload); break;
+            break;
         case 'ADD_EQUIPMENT': case 'UPDATE_EQUIPMENT':
             db.equipment.put(action.payload); break;
         case 'ADD_CAPA': case 'UPDATE_CAPA':
             db.capas.put(action.payload); break;
         case 'DELETE_CAPA':
-            db.capas.delete(action.payload); break;
+            break;
         case 'ADD_DEVIATION': case 'UPDATE_DEVIATION':
             db.deviations.put(action.payload); break;
         case 'DELETE_DEVIATION':
-            db.deviations.delete(action.payload); break;
+            break;
         case 'ADD_CHEMICAL_REAGENT': case 'UPDATE_CHEMICAL_REAGENT':
             db.chemicalReagents.put(action.payload); break;
         case 'ADD_REFERENCE_STANDARD': case 'UPDATE_REFERENCE_STANDARD':
@@ -522,7 +522,7 @@ export function appReducerWithPersistence(state: AppState, action: Action): AppS
         case 'ADD_AUDIT': case 'UPDATE_AUDIT':
             db.audits.put(action.payload); break;
         case 'DELETE_AUDIT':
-            db.audits.delete(action.payload); break;
+            break;
         case 'ADD_SUPPLIER': case 'UPDATE_SUPPLIER':
             db.suppliers.put(action.payload); break;
         case 'ADD_CHANGE_CONTROL': case 'UPDATE_CHANGE_CONTROL':
@@ -530,43 +530,43 @@ export function appReducerWithPersistence(state: AppState, action: Action): AppS
         case 'ADD_MARKET_COMPLAINT': case 'UPDATE_MARKET_COMPLAINT':
             db.marketComplaints.put(action.payload); break;
         case 'DELETE_MARKET_COMPLAINT':
-            db.marketComplaints.delete(action.payload); break;
+            break;
         case 'ADD_PRODUCT_RECALL': case 'UPDATE_PRODUCT_RECALL':
             db.productRecalls.put(action.payload); break;
         case 'DELETE_PRODUCT_RECALL':
-            db.productRecalls.delete(action.payload); break;
+            break;
         case 'ADD_MFR': case 'UPDATE_MFR':
             db.masterFormulas.put(action.payload); break;
         case 'DELETE_MFR':
-            db.masterFormulas.delete(action.payload); break;
+            break;
         case 'ADD_BMR': case 'UPDATE_BMR':
             db.batchRecords.put(action.payload); break;
         case 'DELETE_BMR':
-            db.batchRecords.delete(action.payload); break;
+            break;
         case 'ADD_RAW_MATERIAL': case 'UPDATE_RAW_MATERIAL':
             db.rawMaterials.put(action.payload); break;
         case 'DELETE_RAW_MATERIAL':
-            db.rawMaterials.delete(action.payload); break;
+            break;
         case 'ADD_STABILITY_PROTOCOL': case 'UPDATE_STABILITY_PROTOCOL':
             db.stabilityProtocols.put(action.payload); break;
         case 'DELETE_STABILITY_PROTOCOL':
-            db.stabilityProtocols.delete(action.payload); break;
+            break;
         case 'ADD_IPQC_CHECK': case 'UPDATE_IPQC_CHECK':
             db.ipqcChecks.put(action.payload); break;
         case 'DELETE_IPQC_CHECK':
-            db.ipqcChecks.delete(action.payload); break;
+            break;
         case 'ADD_COA_RECORD': case 'UPDATE_COA_RECORD':
             db.coaRecords.put(action.payload); break;
         case 'DELETE_COA_RECORD':
-            db.coaRecords.delete(action.payload); break;
+            break;
         case 'ADD_MATERIAL_MOVEMENT': case 'UPDATE_MATERIAL_MOVEMENT':
             db.materialMovements.put(action.payload); break;
         case 'DELETE_MATERIAL_MOVEMENT':
-            db.materialMovements.delete(action.payload); break;
+            break;
         case 'ADD_RECONCILIATION_RECORD': case 'UPDATE_RECONCILIATION_RECORD':
             db.reconciliationRecords.put(action.payload); break;
         case 'DELETE_RECONCILIATION_RECORD':
-            db.reconciliationRecords.delete(action.payload); break;
+            break;
         case 'ADD_ACTIVITY':
             if ((action.payload as any).id) db.activities.put(action.payload);
             break;

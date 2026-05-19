@@ -47,7 +47,8 @@ export function useDelete() {
       recordId: string,
       recordLabel: string,
       /** Called AFTER successful delete to update local React state via dispatch */
-      onSuccess: () => void
+      onSuccess: () => void,
+      reason?: string
     ) => {
       if (!user) {
         toast.error('Not authenticated.');
@@ -72,7 +73,7 @@ export function useDelete() {
 
       setIsDeleting(true);
       try {
-        const result = await deleteRecord(user, tableName as any, recordId, recordLabel);
+        const result = await deleteRecord(user, tableName as any, recordId, recordLabel, reason);
 
         if (!result.success) {
           toast.error(result.error || 'Delete failed.');
@@ -82,9 +83,9 @@ export function useDelete() {
         onSuccess();
 
         if (result.cloudDeleted) {
-          toast.success(`"${recordLabel}" permanently deleted and removed from cloud.`);
+          toast.success(`"${recordLabel}" soft-deleted and synced to cloud.`);
         } else {
-          toast.success(`"${recordLabel}" deleted locally. Cloud removal will sync shortly.`);
+          toast.success(`"${recordLabel}" soft-deleted locally. Cloud sync will process shortly.`);
         }
 
         return true;

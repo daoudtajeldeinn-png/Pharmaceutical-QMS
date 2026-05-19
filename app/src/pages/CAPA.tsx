@@ -34,10 +34,12 @@ import { g2CAPARecords } from '@/data/g2Data';
 import { useSecurity } from '@/components/security/SecurityProvider';
 import { SignatureModal } from '@/components/security/SignatureModal';
 import { toast } from 'sonner';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 export function CAPAPage() {
   const { state, dispatch } = useStore();
   const { user } = useSecurity();
+  const { canModify, canDelete } = useRoleAccess();
 
   // Map G2 data to CAPA interface
   const initialCAPAs: CAPA[] = g2CAPARecords.map(g2 => ({
@@ -83,6 +85,10 @@ export function CAPAPage() {
   });
 
   const handleCloseCAPA = (capa: CAPA) => {
+    if (!canModify) {
+      toast.error('Access Denied: Only IT Admin or QA Admin can perform this action.');
+      return;
+    }
     setPendingCloseCAPA(capa);
     setIsSignatureOpen(true);
   };
@@ -119,6 +125,10 @@ export function CAPAPage() {
   };
 
   const handleDeleteCAPA = (id: string) => {
+    if (!canDelete) {
+      toast.error('Access Denied: Only IT Admin or QA Admin can perform this action.');
+      return;
+    }
     if (window.confirm('Are you sure you want to delete this CAPA record?')) {
       dispatch({ type: 'DELETE_CAPA', payload: id });
       setLocalCAPAs(prev => prev.filter(c => c.id !== id));
@@ -128,6 +138,10 @@ export function CAPAPage() {
 
   const handleSaveNewCAPA = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!canModify) {
+      toast.error('Access Denied: Only IT Admin or QA Admin can perform this action.');
+      return;
+    }
     const formData = new FormData(e.currentTarget);
 
     const newCAPA: CAPA = {
@@ -202,10 +216,12 @@ export function CAPAPage() {
           <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-tight">CAPA Records - Corrective & Preventive Actions</h1>
           <p className="text-slate-500">Managing systemic issues and prevention strategies</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)} className="bg-indigo-600">
-          <Plus className="mr-2 h-4 w-4" />
-          Register new CAPA
-        </Button>
+        {canModify && (
+          <Button onClick={() => setIsFormOpen(true)} className="bg-indigo-600">
+            <Plus className="mr-2 h-4 w-4" />
+            Register new CAPA
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -314,7 +330,7 @@ export function CAPAPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      {capa.status !== 'Closed' && (
+                      {canModify && capa.status !== 'Closed' && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -328,7 +344,7 @@ export function CAPAPage() {
                           <CheckCircle className="h-4 w-4" />
                         </Button>
                       )}
-                      {user?.role === 'admin' && (
+                      {canDelete && (
                         <Button
                           variant="ghost"
                           size="icon"

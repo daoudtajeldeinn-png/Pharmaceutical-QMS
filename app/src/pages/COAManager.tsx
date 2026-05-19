@@ -43,6 +43,73 @@ export function COAManagerPage() {
     const [formData, setFormData] = useState<Partial<COARecord>>(initialFormState);
     const printRef = useRef<HTMLDivElement>(null);
 
+    const sortFinishedProductTests = (tests: any[]): any[] => {
+        const getTestOrderScore = (testName: string): number => {
+            const name = (testName || '').toLowerCase().trim();
+            
+            // 1. Description or Appearance
+            if (name.includes('description') || name.includes('appearance') || name.includes('characters')) {
+                return 10;
+            }
+            
+            // 2. Identification
+            if (name.includes('identification') || name.includes('identity')) {
+                if (name.includes('ir') || name.includes('infra')) {
+                    return 21; // Identification A: IR
+                }
+                if (name.includes('colour') || name.includes('color') || name.includes('reaction')) {
+                    return 22; // Identification B: colour reaction
+                }
+                if (name.includes('melting')) {
+                    return 23; // Identification C: Melting Point
+                }
+                return 24; // Other Identification
+            }
+            if (name.includes('melting point') || name.includes('melting range')) {
+                return 23; // Identification C: Melting Point
+            }
+            
+            // 3. uniformity of Weight
+            if (name.includes('uniformity') || name.includes('weight') || name.includes('variation') || name.includes('average weight')) {
+                return 30;
+            }
+            
+            // 4. disintegration
+            if (name.includes('disintegration')) {
+                return 40;
+            }
+            
+            // 5. Dissolution
+            if (name.includes('dissolution')) {
+                return 50;
+            }
+            
+            // 6. Related substance
+            if (name.includes('related') || name.includes('impurity') || name.includes('impurities') || name.includes('degradation')) {
+                return 60;
+            }
+            
+            // 7. Friability
+            if (name.includes('friability')) {
+                return 70;
+            }
+            
+            // 8. thickness
+            if (name.includes('thickness')) {
+                return 80;
+            }
+            
+            // 9. Hardness
+            if (name.includes('hardness')) {
+                return 90;
+            }
+            
+            return 999; // Append any other tests at the end
+        };
+
+        return [...tests].sort((a, b) => getTestOrderScore(a.test) - getTestOrderScore(b.test));
+    };
+
     const handlePrint = useReactToPrint({
         contentRef: printRef,
         documentTitle: selectedCOA ? `COA-${selectedCOA.coaNumber}` : 'COA',
@@ -71,6 +138,7 @@ export function COAManagerPage() {
         }
 
         const coaId = isEditing ? formData.id! : Math.random().toString(36).substr(2, 9);
+        const rawTests = formData.testResults || [];
         const record: COARecord = {
             id: coaId,
             type: formData.type || 'Finished Product',
@@ -91,7 +159,7 @@ export function COAManagerPage() {
             issueDate: formData.issueDate || new Date().toISOString().split('T')[0],
             manufacturer: formData.manufacturer || 'Pharma Corp',
             address: formData.address || 'Industrial Zone, Phase 2, Pharmaceutical District',
-            testResults: formData.testResults || [],
+            testResults: formData.type === 'Finished Product' ? sortFinishedProductTests(rawTests) : rawTests,
             marketComplaintStatus: formData.marketComplaintStatus || 'Verified and Compliant',
             analyzedBy: formData.analyzedBy || '',
             checkedBy: formData.checkedBy || '',
@@ -170,18 +238,24 @@ export function COAManagerPage() {
                 (categoryOrder[a.category] || 99) - (categoryOrder[b.category] || 99)
             );
 
+            const mappedTests = sortedTests.map(t => ({
+                test: t.test,
+                specification: t.specification,
+                result: '',
+                status: 'Pass' as const
+            }));
+
+            const finalTests = formData.type === 'Finished Product'
+                ? sortFinishedProductTests(mappedTests)
+                : mappedTests;
+
             setFormData({
                 ...formData,
                 productName: monograph.name,
                 strength: (monograph as any).strength || '',
                 dosageForm: (monograph as any).dosageForm || '',
                 manufacturer: monograph.standard === 'In-House' ? 'In-House' : 'Pharma Corp',
-                testResults: sortedTests.map(t => ({
-                    test: t.test,
-                    specification: t.specification,
-                    result: '',
-                    status: 'Pass'
-                }))
+                testResults: finalTests
             });
         }
     };
@@ -421,9 +495,12 @@ export function COAManagerPage() {
                                           };
                                         });
                                       });
+                                      const finalTests = formData.type === 'Finished Product'
+                                        ? sortFinishedProductTests(fetchedTests)
+                                        : fetchedTests;
                                       setFormData({
                                         ...formData,
-                                        testResults: fetchedTests as any
+                                        testResults: finalTests as any
                                       });
                                       toast.success(`Fetched ${fetchedTests.length} parameters from Test Results`);
                                     } else {
@@ -525,7 +602,18 @@ export function COAManagerPage() {
                         <h3 className="font-bold mb-2 underline uppercase">Analytical Results:</h3>
                         <table className="w-full">
                             <thead><tr className="bg-gray-100"><th>Test Parameter</th><th>Specification</th><th>Observed Result</th><th className="text-center">Inference</th></tr></thead>
-                            <tbody>{selectedCOA.testResults.map((t, i) => (<tr key={i}><td className="font-semibold">{t.test}</td><td>{t.specification}</td><td className="font-bold">{t.result}</td><td className="text-center font-bold">{t.status === 'Pass' ? 'COMPLIES' : t.status === 'Fail' ? 'DOES NOT COMPLY' : t.status}</td></tr>))}</tbody>
+                            <tbody>
+                                {(selectedCOA.type === 'Finished Product' ? sortFinishedProductTests(selectedCOA.testResults) : selectedCOA.testResults).map((t, i) => (
+                                    <tr key={i}>
+                                        <td className="font-semibold">{t.test}</td>
+                                        <td>{t.specification}</td>
+                                        <td className="font-bold">{t.result}</td>
+                                        <td className="text-center font-bold">
+                                            {t.status === 'Pass' ? 'COMPLIES' : t.status === 'Fail' ? 'DOES NOT COMPLY' : t.status}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
                         </table>
 
                         <div className="mt-6 p-4 border border-black italic text-sm">

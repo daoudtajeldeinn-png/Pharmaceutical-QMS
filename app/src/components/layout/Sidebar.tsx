@@ -134,8 +134,12 @@ const BASE_MENU_ITEMS: MenuItem[] = [
   { label: 'Global Settings', icon: Settings, path: '/settings' },
 ];
 
-const getMenuItems = (): MenuItem[] => {
+const getMenuItems = (user: any): MenuItem[] => {
   const items = [...BASE_MENU_ITEMS];
+
+  if (user && (user.role === 'it_admin' || user.role === 'qa_admin' || user.role === 'admin')) {
+    items.push({ label: 'Data Recovery Console', icon: HistoryIcon, path: '/recovery' });
+  }
 
   if (import.meta.env.DEV) {
     items.push({ label: 'System Activation', icon: Terminal, path: '/dev/licensing' });
@@ -218,7 +222,7 @@ function MenuItemComponent({ item, depth = 0 }: { item: MenuItem; depth?: number
 
 export function Sidebar() {
   const { logout, user } = useSecurity();
-  const menuItems = getMenuItems();
+  const menuItems = getMenuItems(user);
 
   const handleLogout = () => {
     if (window.confirm('Terminate current session?')) {
