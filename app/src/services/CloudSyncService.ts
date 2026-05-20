@@ -107,8 +107,13 @@ export async function syncAllTables() {
                 // Remove any records that an admin has permanently deleted.
                 // This prevents sync from "resurrecting" deleted data.
                 const safeData = deletedIds.size > 0
-                    ? remoteData.filter((row: any) => !deletedIds.has(row.id))
+                    ? remoteData.filter((row: any) => {
+                        // Supabase tombstones store `record_id`, but different tables may expose it as `id` or `record_id`.
+                        const rowId = row.id ?? row.record_id;
+                        return rowId ? !deletedIds.has(String(rowId)) : true;
+                      })
                     : remoteData;
+
                 // ─────────────────────────────────────────────────────────────
 
                 // Store remote data as-is (ISO strings stay as strings).

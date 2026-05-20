@@ -447,11 +447,11 @@ export function COAManagerPage() {
                                     const batchQuery = formData.batchNumber?.trim().toLowerCase();
                                     const material = state.rawMaterials.find(m => m.batchNumber?.trim().toLowerCase() === batchQuery);
                                     if (material && material.tests && material.tests.length > 0) {
-                                      const fetchedTests = material.tests.map(t => ({
-                                        test: t.name,
-                                        specification: t.spec,
-                                        result: String(t.result || ''),
-                                        status: t.status === 'Pass' ? 'Pass' : t.status === 'Fail' ? 'Fail' : 'Pending'
+                                      const fetchedTests = material.tests.map((t: any) => ({
+                                        test: t?.name ?? t?.test ?? t?.testName ?? '',
+                                        specification: t?.spec ?? t?.specification ?? '',
+                                        result: String(t?.result ?? t?.value ?? t?.observed ?? ''),
+                                        status: t?.status === 'Pass' ? 'Pass' : t?.status === 'Fail' ? 'Fail' : 'Pending'
                                       }));
                                       setFormData({
                                         ...formData,

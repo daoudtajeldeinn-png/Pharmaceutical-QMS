@@ -88,7 +88,9 @@ export class PharmaDB extends Dexie {
 
 this.version(6).stores({
             rawMaterials: 'id, name, batchNumber, status, type, productionDate, manufacturingDate',
-            coaRecords: 'id, productName, coaNumber, status, analysisDate, productionDate',
+            // COA Foundry reads/writes many fields (batchNumber, testResults, marketComplaintStatus, etc.).
+            // Keep indexes aligned with the UI lookup and persistence behavior.
+            coaRecords: 'id, productName, coaNumber, batchNumber, status, analysisDate, productionDate, issueDate, manufacturingDate, type',
             ipqcChecks: 'id, stage, status, batchNumber'
         });
 
