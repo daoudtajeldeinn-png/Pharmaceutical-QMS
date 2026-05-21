@@ -34,6 +34,8 @@ import { useSecurity } from '@/components/security/SecurityProvider';
 import { SignatureModal } from '@/components/security/SignatureModal';
 import { toast } from 'sonner';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useDelete } from '@/hooks/useDelete';
+import { DeleteConfirmationDialog } from '@/components/security/DeleteConfirmationDialog';
 
 export function DeviationsPage() {
   const { state, dispatch } = useStore();
@@ -101,15 +103,51 @@ export function DeviationsPage() {
     }
   };
 
-  const handleDeleteDeviation = (id: string) => {
+  const { handleDelete } = useDelete();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedDeviationToDelete, setSelectedDeviationToDelete] = useState<Deviation | null>(null);
+
+  const handleDeleteDeviationClick = (deviation: Deviation) => {
     if (!canDelete) {
       toast.error('Access Denied: Only IT Admin or QA Admin can perform this action.');
       return;
     }
-    if (window.confirm('Are you sure you want to delete this deviation record?')) {
-      dispatch({ type: 'DELETE_DEVIATION', payload: id });
-      setLocalDeviations(prev => prev.filter(d => d.id !== id));
-      toast.success('Deviation record purged from system');
+    setSelectedDeviationToDelete(deviation);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteDeviation = async (reason: string) => {
+    if (!selectedDeviationToDelete) return;
+    const success = await handleDelete(
+      'deviations',
+      selectedDeviationToDelete.id,
+      `Deviation ${selectedDeviationToDelete.id} - ${selectedDeviationToDelete.title}`,
+      () => {
+        dispatch({ type: 'DELETE_DEVIATION', payload: selectedDeviationToDelete.id });
+        setLocalDeviations(prev => prev.filter(d => d.id !== selectedDeviationToDelete.id));
+        dispatch({
+          type: 'ADD_ACTIVITY',
+          payload: {
+            id: crypto.randomUUID(),
+            type: 'Product_Updated',
+            description: `[DELETE] Deviation: ${selectedDeviationToDelete.id} by ${user?.username}. Reason: ${reason}`,
+            user: user?.name || 'Unknown',
+            timestamp: new Date(),
+          },
+        });
+      },
+      reason
+    );
+    if (success) {
+      setIsDeleteDialogOpen(false);
+      setSelectedDeviationToDelete(null);
+    }
+  };
+
+  const handleDeleteDeviation = (id: string) => {
+    const deviationRecord = localDeviations.find(d => d.id === id);
+    if (deviationRecord) {
+      handleDeleteDeviationClick(deviationRecord);
     }
   };
 
@@ -438,6 +476,16 @@ export function DeviationsPage() {
         onConfirm={handleSignatureConfirm}
         actionIntent={`I certify that the investigation for Deviation ${pendingCloseDeviation?.id} is complete and all impact assessments have been finalized.`}
       />
+
+      {selectedDeviationToDelete && (
+        <DeleteConfirmationDialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDeleteDeviation}
+          recordLabel={`Deviation ${selectedDeviationToDelete.id} - ${selectedDeviationToDelete.title}`}
+          tableName="deviations"
+        />
+      )}
     </div>
   );
 }

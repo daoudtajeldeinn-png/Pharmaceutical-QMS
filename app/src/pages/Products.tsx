@@ -18,7 +18,7 @@ import type { PharmaceuticalProduct } from '@/types';
 export function Products() {
   const { state, dispatch } = useStore();
   const { user } = useSecurity();
-  const { canDelete, handleDelete, isDeleting, roleCanDelete } = useDelete();
+  const { canDelete, handleDelete, isDeleting } = useDelete();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PharmaceuticalProduct | null>(null);
@@ -35,7 +35,7 @@ export function Products() {
   };
 
   const handleDeleteClick = (product: PharmaceuticalProduct) => {
-    if (!roleCanDelete) {
+    if (!canDelete) {
       return; // Button is hidden for non-admins, but guard anyway
     }
     setSelectedProduct(product);
@@ -122,7 +122,7 @@ export function Products() {
           <p className="text-slate-500">Managing Manufacturing Inventory &amp; Raw Material Database</p>
         </div>
         <div className="flex items-center gap-3">
-          {!roleCanDelete && (
+          {!canDelete && (
             <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
               <ShieldAlert className="h-3.5 w-3.5" />
               Read-only — deletions require Admin or QA Admin
@@ -138,7 +138,7 @@ export function Products() {
       <ProductTable
         products={state.products}
         onEdit={handleEdit}
-        onDelete={roleCanDelete ? handleDeleteClick : undefined}
+        onDelete={canDelete ? handleDeleteClick : undefined}
         onView={handleView}
         onTest={handleTest}
       />

@@ -342,7 +342,7 @@ export function RecallsPage() {
                                                 </Button>
                                             )}
 
-                                            {user?.role === 'admin' && (
+                                            {(user?.role === 'admin' || user?.role === 'it_admin' || user?.role === 'qa_admin') && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

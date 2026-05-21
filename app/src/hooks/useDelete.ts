@@ -21,9 +21,13 @@ const GLOBAL_DELETE_KEY = 'pqms_global_delete_enabled';
 /** Read the global delete setting (set by admins in Settings → Security) */
 export function isGlobalDeleteEnabled(): boolean {
   try {
-    return localStorage.getItem(GLOBAL_DELETE_KEY) === 'true';
+    const val = localStorage.getItem(GLOBAL_DELETE_KEY);
+    // Default to enabled so admins can delete immediately.
+    // Only disabled when an admin explicitly sets it to 'false' in Settings → Security.
+    if (val === null) return true;
+    return val === 'true';
   } catch {
-    return false;
+    return true;
   }
 }
 

@@ -31,6 +31,8 @@ import type { Audit } from '@/types';
 import { cn } from '@/lib/utils';
 import { useSecurity } from '@/components/security/SecurityProvider';
 import { toast } from 'sonner';
+import { useDelete } from '@/hooks/useDelete';
+import { DeleteConfirmationDialog } from '@/components/security/DeleteConfirmationDialog';
 
 const auditTypeLabels: Record<string, string> = {
   Internal: 'Internal',
@@ -97,10 +99,50 @@ export function AuditsPage() {
     toast.success('Audit protocol finalized and closed');
   };
 
+  const { canDelete, handleDelete } = useDelete();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedAuditToDelete, setSelectedAuditToDelete] = useState<Audit | null>(null);
+
+  const handleDeleteAuditClick = (audit: Audit) => {
+    if (!canDelete) {
+      toast.error('Access Denied: Only Administrators and QA Admins can delete records.');
+      return;
+    }
+    setSelectedAuditToDelete(audit);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteAudit = async (reason: string) => {
+    if (!selectedAuditToDelete) return;
+    const success = await handleDelete(
+      'audits',
+      selectedAuditToDelete.id,
+      `Audit ${selectedAuditToDelete.auditNumber} - ${selectedAuditToDelete.scope}`,
+      () => {
+        dispatch({ type: 'DELETE_AUDIT', payload: selectedAuditToDelete.id });
+        dispatch({
+          type: 'ADD_ACTIVITY',
+          payload: {
+            id: crypto.randomUUID(),
+            type: 'Product_Updated',
+            description: `[DELETE] Audit: ${selectedAuditToDelete.auditNumber} by ${user?.username}. Reason: ${reason}`,
+            user: user?.name || 'Unknown',
+            timestamp: new Date(),
+          },
+        });
+      },
+      reason
+    );
+    if (success) {
+      setIsDeleteDialogOpen(false);
+      setSelectedAuditToDelete(null);
+    }
+  };
+
   const handleDeleteAudit = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this audit record?')) {
-      dispatch({ type: 'DELETE_AUDIT', payload: id });
-      toast.success('Audit record removed from registry');
+    const auditRecord = state.audits.find(a => a.id === id);
+    if (auditRecord) {
+      handleDeleteAuditClick(auditRecord);
     }
   };
 
@@ -304,7 +346,7 @@ export function AuditsPage() {
                           <CheckCircle className="h-4 w-4" />
                         </Button>
                       )}
-                      {user?.role === 'admin' && (
+                      {(user?.role === 'admin' || user?.role === 'it_admin' || user?.role === 'qa_admin') && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -477,6 +519,16 @@ export function AuditsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {selectedAuditToDelete && (
+        <DeleteConfirmationDialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDeleteAudit}
+          recordLabel={`Audit ${selectedAuditToDelete.auditNumber} - ${selectedAuditToDelete.scope}`}
+          tableName="audits"
+        />
+      )}
     </div>
   );
 }

@@ -28,6 +28,7 @@ interface DataTableActionsProps<T> {
   dispatch?: any;
   onView?: (item: T) => void;
   deleteConfirmMsg?: string;
+  bypassConfirm?: boolean;
   extraActions?: ExtraAction<T>[];
 }
 
@@ -38,6 +39,7 @@ export function DataTableActions<T extends { id: string }>({
   dispatch,
   onView,
   deleteConfirmMsg = 'Are you sure you want to delete this record?',
+  bypassConfirm = false,
   extraActions = [],
 }: DataTableActionsProps<T>) {
   const { user } = useSecurity();
@@ -45,9 +47,13 @@ export function DataTableActions<T extends { id: string }>({
   void dispatch;
 
   const handleDelete = () => {
-    if (onDelete && window.confirm(deleteConfirmMsg)) {
-      onDelete(item.id);
-      toast.success('Record deleted successfully.');
+    if (onDelete) {
+      if (bypassConfirm) {
+        onDelete(item.id);
+      } else if (window.confirm(deleteConfirmMsg)) {
+        onDelete(item.id);
+        toast.success('Record deleted successfully.');
+      }
     }
   };
 
@@ -66,7 +72,7 @@ export function DataTableActions<T extends { id: string }>({
             View
           </DropdownMenuItem>
         )}
-        {(user?.role === 'admin') && onEdit && (
+        {(user?.role === 'admin' || user?.role === 'it_admin' || user?.role === 'qa_admin') && onEdit && (
           <DropdownMenuItem 
             onClick={() => onEdit(item)}
             className="text-blue-600 focus:text-blue-600"
@@ -85,7 +91,7 @@ export function DataTableActions<T extends { id: string }>({
             {action.label}
           </DropdownMenuItem>
         ))}
-        {onDelete && (user?.role === 'admin') && (
+        {onDelete && (user?.role === 'admin' || user?.role === 'it_admin' || user?.role === 'qa_admin') && (
           <DropdownMenuItem 
             onClick={handleDelete}
             className="text-red-600 focus:text-red-600"

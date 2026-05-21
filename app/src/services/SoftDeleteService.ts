@@ -39,13 +39,14 @@ export class SoftDeleteService {
       // 4. Update Dexie
       await table.put(updatedRecord);
 
-      // 5. Update Supabase
+      // 5. Update Supabase - delete from main table to propagate globally and prevent resurrection
       try {
         await supabase
           .from(tableName)
-          .upsert(updatedRecord);
+          .delete()
+          .eq('id', recordId);
       } catch (cloudErr) {
-        console.warn('SoftDeleteService: Supabase soft-delete update failed:', cloudErr);
+        console.warn('SoftDeleteService: Supabase delete failed:', cloudErr);
       }
 
       // 6. Record tombstone to prevent sync issues

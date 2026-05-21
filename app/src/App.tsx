@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { StoreProvider } from '@/hooks/useStore';
+import { StoreProvider, useStore } from '@/hooks/useStore';
 import { SecurityProvider, useSecurity, LoginPage } from '@/components/security/SecurityProvider';
 import { LicenseProvider, useLicense } from '@/components/security/LicenseProvider';
 import { MaintenanceProvider } from '@/components/maintenance/MaintenanceProvider';
@@ -129,6 +129,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppLayout() {
   const { user } = useSecurity();
   const { status } = useLicense();
+  const { reloadFromDB } = useStore();
 
   // Background Sync on App Load
   useEffect(() => {
@@ -139,6 +140,8 @@ function AppLayout() {
           const { syncAllTables } = await import('@/services/CloudSyncService');
           const result = await syncAllTables();
           console.log(`AppLayout: Background sync complete. Success: ${result.successCount}, Fail: ${result.failCount}`);
+          await reloadFromDB();
+          console.log('AppLayout: State reloaded from Dexie DB post-sync.');
         } catch (e) {
           console.error('AppLayout: Background sync failed', e);
         }

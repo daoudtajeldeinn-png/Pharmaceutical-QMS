@@ -273,7 +273,7 @@ export function MarketComplaintsPage() {
                                                     <CheckCircle className="h-4 w-4" />
                                                 </Button>
                                             )}
-                                            {user?.role === 'admin' && (
+                                            {(user?.role === 'admin' || user?.role === 'it_admin' || user?.role === 'qa_admin') && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

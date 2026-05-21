@@ -222,6 +222,7 @@ export function ProductTable({
                           void id;
                           onDelete(product);
                         }}
+                        bypassConfirm={true}
                         onView={onView}
                         extraActions={[
                           {

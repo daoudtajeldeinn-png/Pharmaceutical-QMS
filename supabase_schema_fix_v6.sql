@@ -87,5 +87,25 @@ ALTER TABLE "reconciliationRecords"
   ADD COLUMN IF NOT EXISTS "lossReason" text,
   ADD COLUMN IF NOT EXISTS "lossreason" text;
 
--- 4. Force the API to refresh and see the new columns!
+-- 4. Create deletedRecords table for centralized tombstones
+CREATE TABLE IF NOT EXISTS "deletedRecords" (
+  "id" text PRIMARY KEY, -- table_name + '__' + record_id
+  "record_id" text NOT NULL,
+  "table_name" text NOT NULL,
+  "deleted_at" text NOT NULL,
+  "deleted_by" text NOT NULL,
+  "reason" text,
+  "snapshot" text,
+  "recovered" boolean DEFAULT false,
+  "recovered_by" text,
+  "recovered_at" text
+);
+
+-- Enable RLS and add policy to allow all actions for authenticated users
+ALTER TABLE "deletedRecords" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for authenticated" ON "deletedRecords";
+CREATE POLICY "Allow all for authenticated" ON "deletedRecords" FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON "deletedRecords" TO authenticated;
+
+-- 5. Force the API to refresh and see the new columns!
 NOTIFY pgrst, 'reload schema';

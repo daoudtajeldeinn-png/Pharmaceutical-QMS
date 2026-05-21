@@ -110,10 +110,50 @@ export function COAManagerPage() {
         return [...tests].sort((a, b) => getTestOrderScore(a.test) - getTestOrderScore(b.test));
     };
 
-    const handlePrint = useReactToPrint({
-        contentRef: printRef,
-        documentTitle: selectedCOA ? `COA-${selectedCOA.coaNumber}` : 'COA',
-    });
+    const handlePrint = () => {
+        if (!printRef.current) return;
+        const printContent = printRef.current.innerHTML;
+        let iframe = document.getElementById('print-iframe') as HTMLIFrameElement;
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'print-iframe';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+        }
+        const doc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (!doc) return;
+        doc.open();
+        doc.write(`
+            <html>
+                <head>
+                    <title>${selectedCOA ? `COA-${selectedCOA.coaNumber}` : 'COA'}</title>
+                </head>
+                <body>
+                    <div class="print-a4-container">${printContent}</div>
+                </body>
+            </html>
+        `);
+        const head = doc.getElementsByTagName('head')[0];
+        Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]')).forEach((el) => {
+            if (el.tagName === 'LINK') {
+                const href = el.getAttribute('href');
+                if (href && (href.includes('fonts.googleapis.com') || href.includes('fonts.gstatic.com'))) {
+                    return; // Prevent offline timeout delays
+                }
+            }
+            head.appendChild(el.cloneNode(true));
+        });
+        doc.close();
+        setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+        }, 100);
+    };
 
     const handleDownloadPDF = async () => {
         if (!printRef.current || !selectedCOA) return;
@@ -472,6 +512,12 @@ export function COAManagerPage() {
                                     const batchQuery = formData.batchNumber?.trim().toLowerCase();
                                     const results = state.testResults.filter(r => r.batchNumber?.trim().toLowerCase() === batchQuery);
                                     if (results.length > 0) {
+                                      // Look up product and batch details to auto-populate metadata
+                                      const prodId = results[0].productId;
+                                      const product = state.products.find(p => p.id === prodId) || 
+                                                      state.products.find(p => p.batchNumber?.trim().toLowerCase() === batchQuery);
+                                      const batchRecord = state.batchRecords.find(b => b.batchNumber?.trim().toLowerCase() === batchQuery);
+
                                       const fetchedTests = results.flatMap(r => {
                                         // Find the test method to get the actual specifications
                                         const method = state.testMethods.find(m => m.id === r.testMethodId);
@@ -498,11 +544,34 @@ export function COAManagerPage() {
                                       const finalTests = formData.type === 'Finished Product'
                                         ? sortFinishedProductTests(fetchedTests)
                                         : fetchedTests;
+
+                                      // Determine values
+                                      const productName = product?.name || batchRecord?.productName || '';
+                                      const genericName = product?.genericName || '';
+                                      const brandName = product?.brandName || product?.name || batchRecord?.productName || '';
+                                      const dosageForm = product?.dosageForm || '';
+                                      const strength = product?.strength || '';
+                                      const manufacturingDate = batchRecord?.mfgDate || batchRecord?.manufacturingDate || product?.manufacturingDate || '';
+                                      const expiryDate = batchRecord?.expiryDate || product?.expiryDate || '';
+                                      const quantity = batchRecord?.batchSize ? `${batchRecord.batchSize} ${batchRecord.batchSizeUnit || 'kg'}` : (product?.quantity ? `${product.quantity} ${product.unit || 'units'}` : '');
+                                      const manufacturer = product?.manufacturer || 'Self Manufactured';
+                                      const address = product?.address || 'GMP Certified Production Block A';
+
                                       setFormData({
                                         ...formData,
+                                        productName,
+                                        genericName,
+                                        brandName,
+                                        dosageForm,
+                                        strength,
+                                        manufacturingDate,
+                                        expiryDate,
+                                        quantity,
+                                        manufacturer,
+                                        address,
                                         testResults: finalTests as any
                                       });
-                                      toast.success(`Fetched ${fetchedTests.length} parameters from Test Results`);
+                                      toast.success(`Fetched ${fetchedTests.length} parameters and batch metadata from Test Results`);
                                     } else {
                                       toast.warning('No batch test results found in Laboratory Hub');
                                     }

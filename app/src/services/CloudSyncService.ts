@@ -102,7 +102,7 @@ export async function syncAllTables() {
                 throw pullError;
             }
 
-            if (remoteData && remoteData.length > 0) {
+            if (remoteData) {
                 // ── TOMBSTONE FILTER ──────────────────────────────────────────
                 // Remove any records that an admin has permanently deleted.
                 // This prevents sync from "resurrecting" deleted data.
@@ -116,11 +116,23 @@ export async function syncAllTables() {
 
                 // ─────────────────────────────────────────────────────────────
 
+                // Ensure local data exactly matches remote data after push
+                const remoteIds = new Set(safeData.map((row: any) => row.id));
+                const allLocalDataNow = await (db as any)[tableName].toArray();
+
+                for (const localItem of allLocalDataNow) {
+                    if (!remoteIds.has(localItem.id)) {
+                        await (db as any)[tableName].delete(localItem.id);
+                    }
+                }
+
                 // Store remote data as-is (ISO strings stay as strings).
                 // Converting to Date objects here caused React error #31 when components
                 // rendered date values directly as JSX children. Components that need
                 // actual Date methods should call new Date(value) themselves.
-                await (db as any)[tableName].bulkPut(safeData);
+                if (safeData.length > 0) {
+                    await (db as any)[tableName].bulkPut(safeData);
+                }
             }
 
             successCount++;

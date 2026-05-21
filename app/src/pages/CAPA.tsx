@@ -35,6 +35,8 @@ import { useSecurity } from '@/components/security/SecurityProvider';
 import { SignatureModal } from '@/components/security/SignatureModal';
 import { toast } from 'sonner';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useDelete } from '@/hooks/useDelete';
+import { DeleteConfirmationDialog } from '@/components/security/DeleteConfirmationDialog';
 
 export function CAPAPage() {
   const { state, dispatch } = useStore();
@@ -124,15 +126,51 @@ export function CAPAPage() {
     }
   };
 
-  const handleDeleteCAPA = (id: string) => {
+  const { handleDelete } = useDelete();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedCAPAToDelete, setSelectedCAPAToDelete] = useState<CAPA | null>(null);
+
+  const handleDeleteCAPAClick = (capa: CAPA) => {
     if (!canDelete) {
       toast.error('Access Denied: Only IT Admin or QA Admin can perform this action.');
       return;
     }
-    if (window.confirm('Are you sure you want to delete this CAPA record?')) {
-      dispatch({ type: 'DELETE_CAPA', payload: id });
-      setLocalCAPAs(prev => prev.filter(c => c.id !== id));
-      toast.success('CAPA record deleted');
+    setSelectedCAPAToDelete(capa);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteCAPA = async (reason: string) => {
+    if (!selectedCAPAToDelete) return;
+    const success = await handleDelete(
+      'capas',
+      selectedCAPAToDelete.id,
+      `CAPA ${selectedCAPAToDelete.capaNumber} - ${selectedCAPAToDelete.title}`,
+      () => {
+        dispatch({ type: 'DELETE_CAPA', payload: selectedCAPAToDelete.id });
+        setLocalCAPAs(prev => prev.filter(c => c.id !== selectedCAPAToDelete.id));
+        dispatch({
+          type: 'ADD_ACTIVITY',
+          payload: {
+            id: crypto.randomUUID(),
+            type: 'Product_Updated',
+            description: `[DELETE] CAPA: ${selectedCAPAToDelete.capaNumber} by ${user?.username}. Reason: ${reason}`,
+            user: user?.name || 'Unknown',
+            timestamp: new Date(),
+          },
+        });
+      },
+      reason
+    );
+    if (success) {
+      setIsDeleteDialogOpen(false);
+      setSelectedCAPAToDelete(null);
+    }
+  };
+
+  const handleDeleteCAPA = (id: string) => {
+    const capaRecord = localCAPAs.find(c => c.id === id);
+    if (capaRecord) {
+      handleDeleteCAPAClick(capaRecord);
     }
   };
 
@@ -459,6 +497,16 @@ export function CAPAPage() {
         onConfirm={handleSignatureConfirm}
         actionIntent={`I certify that the investigation for CAPA ${pendingCloseCAPA?.id} is complete and all corrective/preventive actions have been verified for effectiveness.`}
       />
+
+      {selectedCAPAToDelete && (
+        <DeleteConfirmationDialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDeleteCAPA}
+          recordLabel={`CAPA ${selectedCAPAToDelete.capaNumber} - ${selectedCAPAToDelete.title}`}
+          tableName="capas"
+        />
+      )}
     </div>
   );
 }

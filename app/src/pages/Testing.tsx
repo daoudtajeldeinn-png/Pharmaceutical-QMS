@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '@/hooks/useStore';
+import { useDelete } from '@/hooks/useDelete';
+import { DeleteConfirmationDialog } from '@/components/security/DeleteConfirmationDialog';
 import { TestMethodForm } from '@/components/testing/TestMethodForm';
 import { TestResultForm } from '@/components/testing/TestResultForm';
 import {
@@ -74,6 +76,45 @@ export function Testing() {
   };
 
   const { user } = useSecurity();
+  const { canDelete, handleDelete } = useDelete();
+  const [isResultDeleteDialogOpen, setIsResultDeleteDialogOpen] = useState(false);
+  const [selectedResultToDelete, setSelectedResultToDelete] = useState<TestResult | null>(null);
+
+  const handleDeleteResultClick = (result: TestResult) => {
+    if (!canDelete) {
+      toast.error('Access Denied: Only Administrators and QA Admins can delete records.');
+      return;
+    }
+    setSelectedResultToDelete(result);
+    setIsResultDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteResult = async (reason: string) => {
+    if (!selectedResultToDelete) return;
+    const success = await handleDelete(
+      'testResults',
+      selectedResultToDelete.id,
+      `Batch ${selectedResultToDelete.batchNumber} - Sample ${selectedResultToDelete.sampleId}`,
+      () => {
+        dispatch({ type: 'DELETE_TEST_RESULT', payload: selectedResultToDelete.id });
+        dispatch({
+          type: 'ADD_ACTIVITY',
+          payload: {
+            id: crypto.randomUUID(),
+            type: 'Product_Updated',
+            description: `[DELETE] Test Result: Batch ${selectedResultToDelete.batchNumber} sample ${selectedResultToDelete.sampleId} by ${user?.username}. Reason: ${reason}`,
+            user: user?.name || 'Unknown',
+            timestamp: new Date(),
+          },
+        });
+      },
+      reason
+    );
+    if (success) {
+      setIsResultDeleteDialogOpen(false);
+      setSelectedResultToDelete(null);
+    }
+  };
 
   const handleCloseOOS = (result: TestResult) => {
     dispatch({
@@ -84,9 +125,9 @@ export function Testing() {
   };
 
   const handleDeleteOOS = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this OOS record?')) {
-      dispatch({ type: 'DELETE_TEST_RESULT', payload: id });
-      toast.success('OOS record deleted.');
+    const oosRecord = (state.testResults || []).find(r => r.id === id);
+    if (oosRecord) {
+      handleDeleteResultClick(oosRecord);
     }
   };
 
@@ -337,7 +378,11 @@ export function Testing() {
                               // Open edit form - implement TestResultEditForm later
                               toast.info('Edit functionality ready - form to be added');
                             }}
-                            onDelete={(id) => dispatch({ type: 'DELETE_TEST_RESULT', payload: id })}
+                            onDelete={(id) => {
+                              const res = (state.testResults || []).find(r => r.id === id);
+                              if (res) handleDeleteResultClick(res);
+                            }}
+                            bypassConfirm={true}
                             onView={() => toast.info(`Viewing test results`)}
                           />
                         </TableCell>
@@ -465,7 +510,7 @@ export function Testing() {
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
                             )}
-                            {user?.role === 'admin' && (
+                            {(user?.role === 'admin' || user?.role === 'it_admin' || user?.role === 'qa_admin') && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -529,6 +574,16 @@ export function Testing() {
           />
         </DialogContent>
       </Dialog>
+
+      {selectedResultToDelete && (
+        <DeleteConfirmationDialog
+          open={isResultDeleteDialogOpen}
+          onClose={() => setIsResultDeleteDialogOpen(false)}
+          onConfirm={confirmDeleteResult}
+          recordLabel={`Batch ${selectedResultToDelete.batchNumber} - Sample ${selectedResultToDelete.sampleId}`}
+          tableName="testResults"
+        />
+      )}
     </div>
   );
 }
