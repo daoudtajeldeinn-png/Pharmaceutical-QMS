@@ -1,6 +1,6 @@
 /**
  * DeletedRecordsService.ts
- * 
+ *
  * Manages "soft-delete tombstones" so that when IT Admin or QA Admin delete
  * a record, the deletion is propagated to ALL users and cannot be restored
  * by a cloud sync unless an authorised admin explicitly recovers it.
@@ -27,31 +27,47 @@ export interface DeletedRecord {
 
 const LOCAL_KEY = 'pqms_deleted_records';
 const CLOUD_TABLE_ALIASES = ['deletedRecords', 'deletedrecords', 'deleted_records'];
-let resolvedCloudTable: string | null = null;
 
-export async function getDeletedRecordsCloudTableName(): Promise<string> {
-  if (resolvedCloudTable) {
+/** undefined = not probed yet; null = no cloud table (local-only mode) */
+let resolvedCloudTable: string | null | undefined;
+let loggedLocalOnlyMode = false;
+
+function isMissingTableError(error: { status?: number; code?: string; message?: string; details?: string } | null): boolean {
+  if (!error) return false;
+  const message = `${error.message ?? ''} ${error.details ?? ''}`.toLowerCase();
+  return (
+    error.status === 404 ||
+    error.code === 'PGRST205' ||
+    error.code === '42P01' ||
+    message.includes('missing relation') ||
+    message.includes('does not exist') ||
+    message.includes('could not find the table')
+  );
+}
+
+function logLocalOnlyModeOnce(): void {
+  if (loggedLocalOnlyMode) return;
+  loggedLocalOnlyMode = true;
+  console.info(
+    'DeletedRecordsService: Cloud tombstone table not found — using local tombstones only. ' +
+      'Run supabase_schema_fix_v6.sql in Supabase to enable cross-device deletion sync.'
+  );
+}
+
+export async function getDeletedRecordsCloudTableName(): Promise<string | null> {
+  if (resolvedCloudTable !== undefined) {
     return resolvedCloudTable;
   }
 
   for (const tableName of CLOUD_TABLE_ALIASES) {
-    const { error } = await supabase
-      .from(tableName)
-      .select('id')
-      .limit(1);
+    const { error } = await supabase.from(tableName).select('id').limit(1);
 
     if (!error) {
       resolvedCloudTable = tableName;
       return tableName;
     }
 
-    const isMissingTable =
-      error.status === 404 ||
-      error.message?.includes('missing relation') ||
-      error.message?.includes('does not exist') ||
-      error.details?.includes('missing relation');
-
-    if (isMissingTable) {
+    if (isMissingTableError(error)) {
       continue;
     }
 
@@ -59,8 +75,13 @@ export async function getDeletedRecordsCloudTableName(): Promise<string> {
     break;
   }
 
-  resolvedCloudTable = CLOUD_TABLE_ALIASES[0];
-  return resolvedCloudTable;
+  resolvedCloudTable = null;
+  logLocalOnlyModeOnce();
+  return null;
+}
+
+export function isCloudTombstoneSyncAvailable(): boolean {
+  return resolvedCloudTable !== null;
 }
 
 // ==================== Local Storage Helpers ====================
@@ -100,23 +121,23 @@ export async function recordDeletion(
     recovered: false,
   };
 
-  // 1. Save locally immediately
   const local = loadLocalTombstones();
   const existing = local.findIndex(t => t.id === recordId && t.tableName === tableName);
   if (existing >= 0) {
-    local[existing] = tombstone; // update if re-deleted
+    local[existing] = tombstone;
   } else {
     local.push(tombstone);
   }
   saveLocalTombstones(local);
 
-  // 2. Push to Supabase (best effort – non-blocking)
+  const cloudTable = await getDeletedRecordsCloudTableName();
+  if (!cloudTable) return;
+
   try {
-    const cloudTable = await getDeletedRecordsCloudTableName();
     await supabase
       .from(cloudTable)
       .upsert({
-        id: `${tableName}__${recordId}`,   // composite PK
+        id: `${tableName}__${recordId}`,
         record_id: recordId,
         table_name: tableName,
         deleted_at: tombstone.deletedAt,
@@ -148,14 +169,16 @@ export function getDeletedIds(tableName: string): Set<string> {
  * Called at sync time so all workstations get the same tombstone list.
  */
 export async function syncTombstonesFromCloud(): Promise<void> {
+  const cloudTable = await getDeletedRecordsCloudTableName();
+  if (!cloudTable) return;
+
   try {
-    const cloudTable = await getDeletedRecordsCloudTableName();
-    const { data, error } = await supabase
-      .from(cloudTable)
-      .select('*');
+    const { data, error } = await supabase.from(cloudTable).select('*');
 
     if (error || !data) {
-      console.warn('DeletedRecordsService: Could not fetch tombstones from cloud:', error);
+      if (!isMissingTableError(error)) {
+        console.warn('DeletedRecordsService: Could not fetch tombstones from cloud:', error);
+      }
       return;
     }
 
@@ -204,9 +227,10 @@ export async function recoverRecord(
   local[idx] = { ...local[idx], recovered: true };
   saveLocalTombstones(local);
 
-  // Push recovery flag to cloud
+  const cloudTable = await getDeletedRecordsCloudTableName();
+  if (!cloudTable) return local[idx];
+
   try {
-    const cloudTable = await getDeletedRecordsCloudTableName();
     await supabase
       .from(cloudTable)
       .update({ recovered: true, recovered_by: recoveredByUsername, recovered_at: new Date().toISOString() })
@@ -229,9 +253,10 @@ export async function purgeTombstone(
   const filtered = local.filter(t => !(t.id === recordId && t.tableName === tableName));
   saveLocalTombstones(filtered);
 
-  // Remove tombstone from cloud
+  const cloudTable = await getDeletedRecordsCloudTableName();
+  if (!cloudTable) return;
+
   try {
-    const cloudTable = await getDeletedRecordsCloudTableName();
     await supabase
       .from(cloudTable)
       .delete()

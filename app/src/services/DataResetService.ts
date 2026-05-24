@@ -126,7 +126,9 @@ export async function resetAllData(
         // ============ STAGE 3: Clear Tombstones ============
         try {
             const tombstoneTable = await getDeletedRecordsCloudTableName();
-            await supabase.from(tombstoneTable).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (tombstoneTable) {
+                await supabase.from(tombstoneTable).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            }
             localStorage.removeItem('pqms_deleted_records');
             console.log('✅ Cleared tombstones');
         } catch (err) {
