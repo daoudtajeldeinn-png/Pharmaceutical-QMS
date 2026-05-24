@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from 'vite-plugin-pwa'
 
+const isElectronBuild = process.env.ELECTRON === 'true'
+
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
@@ -25,7 +27,7 @@ export default defineConfig({
     }  },
   plugins: [
     react(),
-    VitePWA({
+    ...(!isElectronBuild ? [VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'manifest.json'],
       manifest: {
@@ -120,7 +122,7 @@ export default defineConfig({
       devOptions: {
         enabled: false
       }
-    })
+    })] : []),
   ],
   resolve: {
     alias: {
