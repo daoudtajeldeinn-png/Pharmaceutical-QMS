@@ -50,6 +50,110 @@ export function ReportsPage() {
   const [reportType, setReportType] = useState('products');
   const [dateRange, setDateRange] = useState('month');
 
+  const handleExportArchive = () => {
+    const data = {
+      products: state.products,
+      testResults: state.testResults,
+      capas: state.capas,
+      deviations: state.deviations,
+      equipment: state.equipment,
+      chemicalReagents: state.chemicalReagents,
+      referenceStandards: state.referenceStandards,
+      dashboardStats: state.dashboardStats,
+      exportDate: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pharmaqms-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadReport = (templateId: string) => {
+    let data: any;
+    let filename: string;
+
+    switch (templateId) {
+      case 'product-summary':
+        data = state.products.map(p => ({
+          name: p.name,
+          batchNumber: p.batchNumber,
+          status: p.status,
+          expiryDate: p.expiryDate,
+          manufacturer: p.manufacturer
+        }));
+        filename = 'inventory-summary.csv';
+        break;
+      case 'test-results':
+        data = state.testResults.map(t => ({
+          testName: t.testName,
+          batchNumber: t.batchNumber,
+          overallResult: t.overallResult,
+          testDate: t.testDate
+        }));
+        filename = 'qc-test-metrics.csv';
+        break;
+      case 'capa-report':
+        data = state.capas.map(c => ({
+          title: c.title,
+          status: c.status,
+          dueDate: c.dueDate,
+          assignedTo: c.assignedTo
+        }));
+        filename = 'capa-efficacy.csv';
+        break;
+      case 'deviation-report':
+        data = state.deviations.map(d => ({
+          title: d.title,
+          type: d.type,
+          status: d.status,
+          reportedDate: d.reportedDate
+        }));
+        filename = 'non-conformity-log.csv';
+        break;
+      case 'equipment-report':
+        data = state.equipment.map(e => ({
+          name: e.name,
+          status: e.status,
+          nextCalibration: e.nextCalibration,
+          location: e.location
+        }));
+        filename = 'asset-compliance.csv';
+        break;
+      case 'training-report':
+        data = state.trainingRecords.map(t => ({
+          employeeName: t.employeeName,
+          trainingType: t.trainingType,
+          status: t.status,
+          completionDate: t.completionDate
+        }));
+        filename = 'competency-matrix.csv';
+        break;
+      default:
+        return;
+    }
+
+    const csv = [
+      Object.keys(data[0]).join(','),
+      ...data.map((row: any) => Object.values(row).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // Product Status Data
   const productStatusData = Object.entries(state.dashboardStats.productsByStatus).map(([status, count]) => ({
     name: status === 'Quarantine' ? 'Quarantine' :
@@ -117,7 +221,7 @@ export function ReportsPage() {
             <Share2 className="mr-2 h-4 w-4" />
             Distribute
           </Button>
-          <Button className="bg-indigo-600">
+          <Button className="bg-indigo-600" onClick={handleExportArchive}>
             <Download className="mr-2 h-4 w-4" />
             Export Archive
           </Button>
@@ -307,7 +411,7 @@ export function ReportsPage() {
                             <FileText className="mr-2 h-4 w-4" />
                             Preview
                           </Button>
-                          <Button size="sm" className="bg-indigo-600">
+                          <Button size="sm" className="bg-indigo-600" onClick={() => handleDownloadReport(template.id)}>
                             <Download className="mr-2 h-4 w-4" />
                             Download
                           </Button>

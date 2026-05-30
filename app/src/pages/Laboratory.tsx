@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { Search, Beaker, FlaskConical, AlertTriangle } from 'lucide-react';
+import { Search, Beaker, FlaskConical, AlertTriangle, Edit, Trash2 } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
 import { cn } from '@/lib/utils';
 
@@ -65,6 +65,7 @@ export function LaboratoryPage() {
   const [, setIsStandardFormOpen] = useState(false);
   const [reagentGrade, setReagentGrade] = useState('');
   const [reagentUnit, setReagentUnit] = useState('');
+  const [editingReagent, setEditingReagent] = useState<string | null>(null);
   const [newReagent, setNewReagent] = useState({
     name: '',
     casNumber: '',
@@ -160,7 +161,7 @@ export function LaboratoryPage() {
     }
 
     const reagent = {
-      id: crypto.randomUUID(),
+      id: editingReagent || crypto.randomUUID(),
       ...newReagent,
       quantity: parseFloat(newReagent.quantity) || 0,
       expiryDate: new Date(newReagent.expiryDate),
@@ -176,13 +177,22 @@ export function LaboratoryPage() {
       }
     };
 
-    dispatch({
-      type: 'ADD_CHEMICAL_REAGENT',
-      payload: reagent
-    });
+    if (editingReagent) {
+      dispatch({
+        type: 'UPDATE_CHEMICAL_REAGENT',
+        payload: reagent
+      });
+      toast.success('Reagent updated successfully');
+    } else {
+      dispatch({
+        type: 'ADD_CHEMICAL_REAGENT',
+        payload: reagent
+      });
+      toast.success('Reagent added successfully');
+    }
 
-    toast.success('Reagent added successfully');
     setIsReagentFormOpen(false);
+    setEditingReagent(null);
     setNewReagent({
       name: '',
       casNumber: '',
@@ -199,6 +209,35 @@ export function LaboratoryPage() {
     setReagentUnit('');
   };
 
+  const handleEditReagent = (reagent: any) => {
+    setEditingReagent(reagent.id);
+    setNewReagent({
+      name: reagent.name,
+      casNumber: reagent.casNumber || '',
+      manufacturer: reagent.manufacturer,
+      supplier: reagent.supplier || '',
+      quantity: reagent.quantity.toString(),
+      expiryDate: new Date(reagent.expiryDate).toISOString().split('T')[0],
+      dateReceived: new Date(reagent.dateReceived).toISOString().split('T')[0],
+      location: reagent.location || '',
+      storageConditions: reagent.storageConditions || '',
+      batchNumber: reagent.batchNumber || ''
+    });
+    setReagentGrade(reagent.grade);
+    setReagentUnit(reagent.unit);
+    setIsReagentFormOpen(true);
+  };
+
+  const handleDeleteReagent = (id: string) => {
+    if (confirm('Are you sure you want to delete this reagent?')) {
+      dispatch({
+        type: 'DELETE_CHEMICAL_REAGENT',
+        payload: id
+      });
+      toast.success('Reagent deleted successfully');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Toaster position="top-center" />
@@ -208,7 +247,24 @@ export function LaboratoryPage() {
           <p className="text-slate-500">Chemical Reagents & Reference Standards Database</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setIsReagentFormOpen(true)} variant="outline" className="border-indigo-200 text-indigo-700">
+          <Button onClick={() => {
+            setEditingReagent(null);
+            setNewReagent({
+              name: '',
+              casNumber: '',
+              manufacturer: '',
+              supplier: '',
+              quantity: '',
+              expiryDate: '',
+              dateReceived: new Date().toISOString().split('T')[0],
+              location: '',
+              storageConditions: '',
+              batchNumber: ''
+            });
+            setReagentGrade('');
+            setReagentUnit('');
+            setIsReagentFormOpen(true);
+          }} variant="outline" className="border-indigo-200 text-indigo-700">
             <Beaker className="mr-2 h-4 w-4" />
             Add Reagent
           </Button>
@@ -261,12 +317,13 @@ export function LaboratoryPage() {
                   <TableHead className="font-bold text-slate-700">Stock</TableHead>
                   <TableHead className="font-bold text-slate-700">Expiry Status</TableHead>
                   <TableHead className="font-bold text-slate-700">Status</TableHead>
+                  <TableHead className="font-bold text-slate-700">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredReagents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-20 text-slate-400 italic">
+                    <TableCell colSpan={8} className="text-center py-20 text-slate-400 italic">
                       No reagents found matching search criteria.
                     </TableCell>
                   </TableRow>
@@ -302,6 +359,26 @@ export function LaboratoryPage() {
                           <Badge variant="outline" className={cn(reagentStatusColors[reagent.status])}>
                             {reagentStatusLabels[reagent.status]}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditReagent(reagent)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteReagent(reagent.id)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -519,7 +596,9 @@ export function LaboratoryPage() {
       <Dialog open={isReagentFormOpen} onOpenChange={setIsReagentFormOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-slate-900 uppercase">Register New Reagent</DialogTitle>
+            <DialogTitle className="text-xl font-black text-slate-900 uppercase">
+              {editingReagent ? 'Edit Reagent' : 'Register New Reagent'}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">

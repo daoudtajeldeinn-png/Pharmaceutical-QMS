@@ -154,6 +154,7 @@ export type Action =
     | { type: 'SET_CHEMICAL_REAGENTS'; payload: ChemicalReagent[] }
     | { type: 'ADD_CHEMICAL_REAGENT'; payload: ChemicalReagent }
     | { type: 'UPDATE_CHEMICAL_REAGENT'; payload: ChemicalReagent }
+    | { type: 'DELETE_CHEMICAL_REAGENT'; payload: string }
     | { type: 'SET_REFERENCE_STANDARDS'; payload: ReferenceStandard[] }
     | { type: 'ADD_REFERENCE_STANDARD'; payload: ReferenceStandard }
     | { type: 'UPDATE_REFERENCE_STANDARD'; payload: ReferenceStandard }
@@ -281,6 +282,8 @@ export function appReducer(state: AppState, action: Action): AppState {
             return { ...state, chemicalReagents: [...state.chemicalReagents, action.payload] };
         case 'UPDATE_CHEMICAL_REAGENT':
             return { ...state, chemicalReagents: state.chemicalReagents.map((c) => c.id === action.payload.id ? action.payload : c) };
+        case 'DELETE_CHEMICAL_REAGENT':
+            return { ...state, chemicalReagents: state.chemicalReagents.filter((c) => c.id !== action.payload) };
         case 'SET_REFERENCE_STANDARDS':
             return { ...state, referenceStandards: action.payload };
         case 'ADD_REFERENCE_STANDARD':
