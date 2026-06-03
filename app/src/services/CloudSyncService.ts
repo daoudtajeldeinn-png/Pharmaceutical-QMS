@@ -144,10 +144,12 @@ export async function syncAllTables() {
             }
 
             const allLocalData: Record<string, unknown>[] = await (db as any)[tableName].toArray();
-            const localData =
-                deletedIds.size > 0
-                    ? allLocalData.filter((item) => !deletedIds.has(String(item.id)))
-                    : allLocalData;
+            // Filter out any records that are soft-deleted locally (safety net — they should already be physically deleted)
+            const localData = allLocalData.filter((item) => {
+                if (item.deleted_at) return false;
+                if (deletedIds.size > 0 && deletedIds.has(String(item.id))) return false;
+                return true;
+            });
 
             const pushedIds = new Set(localData.map((item) => String(item.id)));
 
