@@ -55,11 +55,11 @@ export async function generateCOAPDF(material: RawMaterial): Promise<void> {
   // Header Section
   doc.setFont('times', 'bold');
   doc.setFontSize(22);
-  doc.text('PHARMA CORP', 105, 20, { align: 'center' });
+  doc.text(material.supplier || 'Company Name', 105, 20, { align: 'center' });
 
   doc.setFont('times', 'italic');
   doc.setFontSize(10);
-  doc.text('Industrial Zone, Phase 2, Pharmaceutical District', 105, 25, { align: 'center' });
+  doc.text('Company Address', 105, 25, { align: 'center' });
 
   doc.setFont('times', 'bold');
   doc.setFontSize(12);
@@ -182,9 +182,9 @@ export async function generateInventoryReportPDF(materials: RawMaterial[]): Prom
   // Header Section
   doc.setFont('times', 'bold');
   doc.setFontSize(20);
-  doc.text('PHARMA CORP', 105, 20, { align: 'center' });
+  doc.text('Company Name', 105, 20, { align: 'center' });
   doc.setFontSize(10);
-  doc.text('Industrial Zone, Phase 2, Pharmaceutical District', 105, 25, { align: 'center' });
+  doc.text('Company Address', 105, 25, { align: 'center' });
   doc.setFontSize(14);
   doc.text('MATERIAL INVENTORY STOCK REPORT', 105, 35, { align: 'center' });
   doc.setLineWidth(0.8);
