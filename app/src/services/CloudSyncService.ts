@@ -50,6 +50,10 @@ function pickNewerRecord(
     return getRecordTimestamp(remote) >= getRecordTimestamp(local) ? remote : local;
 }
 
+<<<<<<< HEAD
+function serializeForSupabase(item: Record<string, unknown>, tableName?: string): Record<string, unknown> {
+    const cleanItem = { ...item };
+=======
 function serializeForSupabase(item: Record<string, unknown>): Record<string, unknown> {
     const cleanItem = { ...item };
     
@@ -69,6 +73,7 @@ function serializeForSupabase(item: Record<string, unknown>): Record<string, unk
         }
     }
 
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
     for (const key in cleanItem) {
         const dateKeys = ['date', 'time', 'timestamp', 'at', 'expiry', 'next', 'schedule', 'created', 'updated', 'lastLogin'];
         const isDateKey = dateKeys.some((dk) => key.toLowerCase().includes(dk));
@@ -76,6 +81,13 @@ function serializeForSupabase(item: Record<string, unknown>): Record<string, unk
             cleanItem[key] = (cleanItem[key] as Date).toISOString();
         }
     }
+<<<<<<< HEAD
+    // Filter out batchNumber for chemicalReagents table (not in Supabase schema)
+    if (tableName === 'chemicalReagents' && 'batchNumber' in cleanItem) {
+        delete cleanItem.batchNumber;
+    }
+=======
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
     return cleanItem;
 }
 
@@ -116,6 +128,10 @@ export async function flushAppStateToDexie(state: AppState): Promise<void> {
     }
 }
 
+<<<<<<< HEAD
+export async function syncAllTables() {
+    console.log('Starting Cloud Synchronization...');
+=======
 /** One-time cleanup: physically remove any records with deleted_at from ALL Dexie tables */
 async function purgeLocalSoftDeleted(): Promise<void> {
     for (const tableName of CLOUD_TABLES) {
@@ -140,6 +156,7 @@ export async function syncAllTables() {
     console.log('Starting Cloud Synchronization...');
     // Purge any locally soft-deleted records before syncing
     await purgeLocalSoftDeleted();
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
     let successCount = 0;
     let failCount = 0;
     const errors: string[] = [];
@@ -166,17 +183,28 @@ export async function syncAllTables() {
             }
 
             const allLocalData: Record<string, unknown>[] = await (db as any)[tableName].toArray();
+<<<<<<< HEAD
+            const localData =
+                deletedIds.size > 0
+                    ? allLocalData.filter((item) => !deletedIds.has(String(item.id)))
+                    : allLocalData;
+=======
             // Filter out any records that are soft-deleted locally (safety net — they should already be physically deleted)
             const localData = allLocalData.filter((item) => {
                 if (item.deleted_at) return false;
                 if (deletedIds.size > 0 && deletedIds.has(String(item.id))) return false;
                 return true;
             });
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
 
             const pushedIds = new Set(localData.map((item) => String(item.id)));
 
             if (localData.length > 0) {
+<<<<<<< HEAD
+                const dataToPush = localData.map((item) => serializeForSupabase(item, tableName));
+=======
                 const dataToPush = localData.map((item) => serializeForSupabase(item));
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
 
                 const { error: pushError } = await supabase
                     .from(tableName)

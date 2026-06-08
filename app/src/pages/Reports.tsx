@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useStore } from '@/hooks/useStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+<<<<<<< HEAD
+=======
 import { toast, Toaster } from 'sonner';
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
 // Badge not used
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -14,6 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
+<<<<<<< HEAD
+=======
 import {
   Dialog,
   DialogContent,
@@ -21,6 +26,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
 // DatePicker removed - not used
 import {
   FileText,
@@ -32,12 +38,16 @@ import {
   Printer,
   Share2,
   FileSpreadsheet,
+<<<<<<< HEAD
+  FileBarChart
+=======
   FileBarChart,
   Loader2,
   Beaker,
   FlaskConical,
   LineChart as LineChartIcon,
   Building2,
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
 } from 'lucide-react';
 import {
   BarChart,
@@ -63,6 +73,10 @@ export function ReportsPage() {
   const [reportType, setReportType] = useState('products');
   const [dateRange, setDateRange] = useState('month');
 
+<<<<<<< HEAD
+  const handleExportArchive = () => {
+    const data = {
+=======
   // New States for interactive reports operations
   const [isFiltering, setIsFiltering] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -310,11 +324,109 @@ export function ReportsPage() {
     const qmsBackup = {
       exportedAt: new Date().toISOString(),
       version: 'PharmaQMS v4.3.3',
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
       products: state.products,
       testResults: state.testResults,
       capas: state.capas,
       deviations: state.deviations,
       equipment: state.equipment,
+<<<<<<< HEAD
+      chemicalReagents: state.chemicalReagents,
+      referenceStandards: state.referenceStandards,
+      dashboardStats: state.dashboardStats,
+      exportDate: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pharmaqms-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadReport = (templateId: string) => {
+    let data: any;
+    let filename: string;
+
+    switch (templateId) {
+      case 'product-summary':
+        data = state.products.map(p => ({
+          name: p.name,
+          batchNumber: p.batchNumber,
+          status: p.status,
+          expiryDate: p.expiryDate,
+          manufacturer: p.manufacturer
+        }));
+        filename = 'inventory-summary.csv';
+        break;
+      case 'test-results':
+        data = state.testResults.map(t => ({
+          testName: t.testName,
+          batchNumber: t.batchNumber,
+          overallResult: t.overallResult,
+          testDate: t.testDate
+        }));
+        filename = 'qc-test-metrics.csv';
+        break;
+      case 'capa-report':
+        data = state.capas.map(c => ({
+          title: c.title,
+          status: c.status,
+          dueDate: c.dueDate,
+          assignedTo: c.assignedTo
+        }));
+        filename = 'capa-efficacy.csv';
+        break;
+      case 'deviation-report':
+        data = state.deviations.map(d => ({
+          title: d.title,
+          type: d.type,
+          status: d.status,
+          reportedDate: d.reportedDate
+        }));
+        filename = 'non-conformity-log.csv';
+        break;
+      case 'equipment-report':
+        data = state.equipment.map(e => ({
+          name: e.name,
+          status: e.status,
+          nextCalibration: e.nextCalibration,
+          location: e.location
+        }));
+        filename = 'asset-compliance.csv';
+        break;
+      case 'training-report':
+        data = state.trainingRecords.map(t => ({
+          employeeName: t.employeeName,
+          trainingType: t.trainingType,
+          status: t.status,
+          completionDate: t.completionDate
+        }));
+        filename = 'competency-matrix.csv';
+        break;
+      default:
+        return;
+    }
+
+    const csv = [
+      Object.keys(data[0]).join(','),
+      ...data.map((row: any) => Object.values(row).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+=======
       trainingRecords: state.trainingRecords,
       chemicalReagents: state.chemicalReagents,
       referenceStandards: state.referenceStandards,
@@ -335,6 +447,7 @@ export function ReportsPage() {
       setIsExporting(false);
       toast.success('System compliance archive downloaded!');
     }, 500);
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
   };
 
   // Product Status Data
@@ -386,10 +499,13 @@ export function ReportsPage() {
     { id: 'deviation-report', name: 'Non-Conformity Log', icon: PieChart, description: 'Detailed analysis of process deviations by severity/type.' },
     { id: 'equipment-report', name: 'Asset Compliance', icon: FileSpreadsheet, description: 'Maintenance and calibration schedules for lab equipment.' },
     { id: 'training-report', name: 'Competency Matrix', icon: FileBarChart, description: 'Personnel training logs and certification status.' },
+<<<<<<< HEAD
+=======
     { id: 'reagent-inventory', name: 'Reagent Database', icon: Beaker, description: 'Chemical reagent inventory, expiry tracking, and stock status report.' },
     { id: 'reference-standards', name: 'Reference Standards', icon: FlaskConical, description: 'Reference standard registry with purity and lot traceability.' },
     { id: 'stability-summary', name: 'Stability Studies', icon: LineChartIcon, description: 'Stability protocol status and trend analysis report.' },
     { id: 'supplier-audit', name: 'Supplier Qualification', icon: Building2, description: 'Qualified supplier list with audit history and status.' },
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
   ];
 
   return (
@@ -400,11 +516,19 @@ export function ReportsPage() {
           <p className="text-slate-500">Generate compliance dossiers and system performance distributions</p>
         </div>
         <div className="flex gap-2">
+<<<<<<< HEAD
+          <Button variant="outline" className="text-indigo-700 border-indigo-200">
+            <Printer className="mr-2 h-4 w-4" />
+            Hardcopy
+          </Button>
+          <Button variant="outline" className="text-indigo-700 border-indigo-200">
+=======
           <Button variant="outline" className="text-indigo-700 border-indigo-200" onClick={handleHardcopy}>
             <Printer className="mr-2 h-4 w-4" />
             Hardcopy
           </Button>
           <Button variant="outline" className="text-indigo-700 border-indigo-200" onClick={() => setIsDistributeOpen(true)}>
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
             <Share2 className="mr-2 h-4 w-4" />
             Distribute
           </Button>
@@ -462,6 +586,10 @@ export function ReportsPage() {
                 </div>
               </>
             )}
+<<<<<<< HEAD
+            <Button variant="outline" className="mb-0.5 border-slate-300">
+              <Filter className="mr-2 h-4 w-4" />
+=======
             <Button
               variant="outline"
               className="mb-0.5 border-slate-300"
@@ -473,6 +601,7 @@ export function ReportsPage() {
               ) : (
                 <Filter className="mr-2 h-4 w-4" />
               )}
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
               Apply
             </Button>
           </div>
@@ -603,11 +732,19 @@ export function ReportsPage() {
                         <h3 className="font-medium">{template.name}</h3>
                         <p className="text-sm text-slate-500 mt-1">{template.description}</p>
                         <div className="flex gap-2 mt-4">
+<<<<<<< HEAD
+                          <Button size="sm" variant="outline" className="border-indigo-100 text-indigo-700">
+                            <FileText className="mr-2 h-4 w-4" />
+                            Preview
+                          </Button>
+                          <Button size="sm" className="bg-indigo-600" onClick={() => handleDownloadReport(template.id)}>
+=======
                           <Button size="sm" variant="outline" className="border-indigo-100 text-indigo-700" onClick={() => handlePreview(template.id)}>
                             <FileText className="mr-2 h-4 w-4" />
                             Preview
                           </Button>
                           <Button size="sm" className="bg-indigo-600" onClick={() => handleDownload(template.id, template.name)}>
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
                             <Download className="mr-2 h-4 w-4" />
                             Download
                           </Button>
@@ -668,6 +805,8 @@ export function ReportsPage() {
           </div>
         </TabsContent>
       </Tabs>
+<<<<<<< HEAD
+=======
 
       {/* sonner Toaster notifications support */}
       <Toaster position="top-center" />
@@ -781,6 +920,7 @@ export function ReportsPage() {
           </div>
         </DialogContent>
       </Dialog>
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
     </div>
   );
 }

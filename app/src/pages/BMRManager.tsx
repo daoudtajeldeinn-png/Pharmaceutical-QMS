@@ -14,6 +14,20 @@ import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+<<<<<<< HEAD
+const formatDate = (date: string | Date | undefined) => {
+    if (!date) return '';
+    try {
+        const d = typeof date === 'string' ? new Date(date) : date;
+        if (isNaN(d.getTime())) return String(date);
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (e) {
+        return String(date);
+    }
+};
+
+=======
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
 export function BMRManagerPage() {
     const { state, dispatch } = useStore();
     const { canModify, canDelete, user } = useRoleAccess();
@@ -33,6 +47,14 @@ export function BMRManagerPage() {
     const handlePrint = useReactToPrint({
         contentRef: printRef,
         documentTitle: selectedBMR ? `BMR-${selectedBMR.batchNumber}` : 'BMR',
+<<<<<<< HEAD
+        onBeforeGetContent: () => {
+            return new Promise((resolve) => {
+                setTimeout(resolve, 100);
+            });
+        },
+=======
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
     });
     const [editingBMR, setEditingBMR] = useState<BatchRecord | null>(null);
 
@@ -372,16 +394,28 @@ const handleUpdateStep = (stepNumber: number, updates: StepUpdate) => {
                                 </div>
                                 <div>
                                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Manufacturing Date</Label>
+<<<<<<< HEAD
+                                    <div className="text-sm font-black text-slate-900">{formatDate(selectedBMR.mfgDate)}</div>
+                                </div>
+                                <div>
+                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Expiry Date</Label>
+                                    <div className="text-sm font-black text-rose-600">{formatDate(selectedBMR.expiryDate)}</div>
+=======
                                     <div className="text-sm font-black text-slate-900">{selectedBMR.mfgDate}</div>
                                 </div>
                                 <div>
                                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Expiry Date</Label>
                                     <div className="text-sm font-black text-rose-600">{selectedBMR.expiryDate}</div>
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
                                 </div>
                              </div>
 
                                 <div className="flex gap-4 mb-10 pb-6 border-b border-slate-100">
+<<<<<<< HEAD
+                                    <Button variant="outline" className="gap-2 font-black uppercase text-[10px] tracking-widest h-11 px-6 border-slate-200 hover:bg-slate-50 transition-all shadow-sm" onClick={handlePrint}>
+=======
                                     <Button variant="outline" className="gap-2 font-black uppercase text-[10px] tracking-widest h-11 px-6 border-slate-200 hover:bg-slate-50 transition-all shadow-sm" onClick={() => handlePrint()}>
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
                                         <Printer className="h-4 w-4 text-slate-500" /> Print Full BMR
                                     </Button>
                                     <Button className="bg-slate-900 hover:bg-black text-white font-black uppercase text-[10px] tracking-widest h-11 px-10 shadow-lg shadow-slate-200 transition-all">
@@ -410,7 +444,11 @@ const handleUpdateStep = (stepNumber: number, updates: StepUpdate) => {
                                         </div>
                                         <div className="p-4 bg-slate-50 rounded-xl border-2 border-slate-100">
                                             <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Mfg/Exp Date</Label>
+<<<<<<< HEAD
+                                            <div className="text-lg font-black text-slate-800">{formatDate(selectedBMR.mfgDate)} / {formatDate(selectedBMR.expiryDate)}</div>
+=======
                                             <div className="text-lg font-black text-slate-800">{selectedBMR.mfgDate} / {selectedBMR.expiryDate}</div>
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
                                         </div>
                                     </div>
 
@@ -992,8 +1030,13 @@ selectedBMR.stepExecutions.filter((s: BMRStepExecution) => s.phase === 'Packagin
                                     <td><strong>MFR Reference:</strong></td><td>{selectedBMR.mfrId.toUpperCase()}</td>
                                 </tr>
                                 <tr>
+<<<<<<< HEAD
+                                    <td><strong>Mfg Date:</strong></td><td>{formatDate(selectedBMR.mfgDate)}</td>
+                                    <td><strong>Expiry Date:</strong></td><td>{formatDate(selectedBMR.expiryDate)}</td>
+=======
                                     <td><strong>Mfg Date:</strong></td><td>{selectedBMR.mfgDate}</td>
                                     <td><strong>Expiry Date:</strong></td><td>{selectedBMR.expiryDate}</td>
+>>>>>>> a408499b0cc2463f1cffe1b7685f97485d7809f2
                                 </tr>
                             </tbody>
                         </table>

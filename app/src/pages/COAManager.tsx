@@ -33,8 +33,8 @@ export function COAManagerPage() {
     const initialFormState: Partial<COARecord> = {
         testResults: [{ test: '', specification: '', result: '', status: 'Pass' }],
         type: 'Finished Product',
-        manufacturer: 'Pharma Corp',
-        address: 'Industrial Zone, Phase 2, Pharmaceutical District',
+        manufacturer: '',
+        address: '',
         manufacturingDate: '',
         analysisDate: '',
         status: 'Draft',
