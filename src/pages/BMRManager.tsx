@@ -312,9 +312,9 @@ const handleUpdateStep = (stepNumber: number, updates: StepUpdate) => {
                                         <ShieldCheck className="h-10 w-10" />
                                     </div>
                                     <div>
-                                        <h1 className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-1">PHARMAQMS ENTERPRISE</h1>
+                                        <h1 className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-1">{companySettings.name}</h1>
                                         <p className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-1">QUALITY MANAGEMENT SYSTEM | GXP COMPLIANCE</p>
-                                        <p className="text-[10px] font-bold text-slate-500 leading-tight">Industrial Zone, Phase 2, Pharmaceutical District Cairo, Egypt<br />Standard Operating Procedure: SOP-PRD-001</p>
+                                        <p className="text-[10px] font-bold text-slate-500 leading-tight">{companySettings.address}<br />Standard Operating Procedure: SOP-PRD-001</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -958,9 +958,9 @@ selectedBMR.stepExecutions.filter((s: BMRStepExecution) => s.phase === 'Packagin
                             }
                         `}</style>
                         <div className="bmr-header" style={{ textAlign: 'left', borderBottom: '3px double black', marginBottom: '20px', paddingBottom: '10px' }}>
-                            <h1 className="text-3xl font-bold uppercase" style={{ margin: 0 }}>PHARMAQMS ENTERPRISE</h1>
+                            <h1 className="text-3xl font-bold uppercase" style={{ margin: 0 }}>{companySettings.name}</h1>
                             <div style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', margin: '4px 0' }}>Quality Management System | GxP COMPLIANCE</div>
-                            <div style={{ fontSize: '11px' }}>Industrial Zone, Phase 2, Pharmaceutical District Cairo, Egypt<br />Standard Operating Procedure: SOP-PRD-001</div>
+                            <div style={{ fontSize: '11px' }}>{companySettings.address}<br />Standard Operating Procedure: SOP-PRD-001</div>
                             <div style={{ textAlign: 'right', marginTop: '-50px' }}>
                                 <div style={{ fontSize: '24px', fontWeight: 'bold' }}>BATCH RECORD</div>
                                 <div style={{ fontSize: '10px', marginTop: '4px' }}>Ref No: {selectedBMR.batchNumber}</div>

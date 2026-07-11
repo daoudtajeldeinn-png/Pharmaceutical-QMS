@@ -497,9 +497,14 @@ export function MFRManagerPage() {
                                 .section-title { background: #f0f0f0; font-weight: bold; padding: 5px; border: 1px solid black; margin-top: 20px; }
                             }
                         `}</style>
-                        <div className="mfr-header">
-                            <h1 className="text-3xl font-bold uppercase">Master Formula Record</h1>
-                            <p className="text-sm font-bold mt-1">Quality Management System - Pharmacy Division</p>
+                        <div className="mfr-header" style={{ textAlign: 'left', borderBottom: '3px double black', marginBottom: '20px', paddingBottom: '10px' }}>
+                            <h1 className="text-3xl font-bold uppercase" style={{ margin: 0 }}>{companySettings.name}</h1>
+                            <div style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', margin: '4px 0' }}>Quality Management System | GxP COMPLIANCE</div>
+                            <div style={{ fontSize: '11px' }}>{companySettings.address}<br />Document Control: MFR-SYS-V2</div>
+                            <div style={{ textAlign: 'right', marginTop: '-50px' }}>
+                                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>MASTER FORMULA</div>
+                                <div style={{ fontSize: '10px', marginTop: '4px' }}>Ref No: {selectedMFR.mfrNumber}</div>
+                            </div>
                         </div>
 
                         <table className="mfr-table">
