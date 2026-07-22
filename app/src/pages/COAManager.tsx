@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useStore } from '@/hooks/useStore';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { Download, Printer, Plus, Activity, AlertCircle, Database, ShieldCheck, Lock } from 'lucide-react';
+import { DataTableActions } from '@/components/ui/data-table-actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -207,6 +208,9 @@ export function COAManagerPage() {
             status: isDraft ? 'Draft' : (formData.status === 'Draft' ? 'Approved' : (formData.status || 'Approved')),
         };
 
+        // COA Foundry Console Verification
+        console.log('COA Payload Verification (Foundry Sync):', JSON.stringify(record, null, 2));
+
         if (isDraft) {
             saveToStore(record);
         } else {
@@ -332,43 +336,38 @@ export function COAManagerPage() {
                                 </td>
                                 <td className="px-4 py-3">
                                     <div className="flex gap-2">
-                                        <Button size="icon" variant="ghost" onClick={() => { setSelectedCOA(record); setTimeout(handlePrint, 100); }}>
-                                            <Printer className="h-4 w-4" />
-                                        </Button>
-                                        <Button size="icon" variant="ghost" onClick={() => { setSelectedCOA(record); setTimeout(handleDownloadPDF, 100); }}>
-                                            <Download className="h-4 w-4" />
-                                        </Button>
-                                        {canModify && (
-                                          <Button size="icon" variant="ghost" onClick={() => { setFormData(record); setIsEditing(true); setShowForm(true); }} className="text-indigo-600">
-                                              <Activity className="h-4 w-4" />
-                                          </Button>
-                                        )}
-                                        {canModify && record.status !== 'Approved' && record.status !== 'Released' && (
-                                            <Button size="icon" variant="ghost" onClick={() => {
-                                                if (window.confirm(`QA AUTHORIZATION: Are you sure you want to OFFICIALLY RELEASE this COA for ${record.productName}?`)) {
-                                                    dispatch({ type: 'UPDATE_COA_RECORD', payload: { ...record, status: 'Released' } });
-                                                    toast.success('COA Officially Released by QA');
+                                        <DataTableActions
+                                            item={record}
+                                            onEdit={(r) => { setFormData(r); setIsEditing(true); setShowForm(true); }}
+                                            onDelete={(id) => {
+                                                if (window.confirm(`ADMIN DELETE: Permanently remove COA ${record.coaNumber}? This removes it for ALL users.`)) {
+                                                    import('@/services/DeletedRecordsService').then(({ recordDeletion }) => {
+                                                        recordDeletion('coaRecords', id, user?.username || 'admin', record, 'Admin deletion');
+                                                    });
+                                                    dispatch({ type: 'DELETE_COA_RECORD', payload: id });
+                                                    toast.success('COA permanently deleted.');
                                                 }
-                                            }} className="text-emerald-600" title="QA Release">
-                                                <ShieldCheck className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                        {canDelete && (
-                                          <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-700"
-                                            onClick={() => {
-                                              if (window.confirm(`ADMIN DELETE: Permanently remove COA ${record.coaNumber}? This removes it for ALL users.`)) {
-                                                import('@/services/DeletedRecordsService').then(({ recordDeletion }) => {
-                                                  recordDeletion('coaRecords', record.id, user?.username || 'admin', record, 'Admin deletion');
-                                                });
-                                                dispatch({ type: 'DELETE_COA_RECORD', payload: record.id });
-                                                toast.success('COA permanently deleted.');
-                                              }
-                                            }}>
-                                            <Lock className="h-4 w-4" />
-                                          </Button>
-                                        )}
+                                            }}
+                                            bypassConfirm={true}
+                                            extraActions={[
+                                                { label: 'Print', icon: <Printer className="mr-2 h-4 w-4" />, onClick: (r) => { setSelectedCOA(r); setTimeout(handlePrint, 100); } },
+                                                { label: 'Download PDF', icon: <Download className="mr-2 h-4 w-4" />, onClick: (r) => { setSelectedCOA(r); setTimeout(handleDownloadPDF, 100); } },
+                                                ...(canModify && record.status !== 'Approved' && record.status !== 'Released' ? [
+                                                    { 
+                                                        label: 'QA Release', 
+                                                        icon: <ShieldCheck className="mr-2 h-4 w-4 text-emerald-600" />, 
+                                                        onClick: (r: COARecord) => {
+                                                            if (window.confirm(`QA AUTHORIZATION: Are you sure you want to OFFICIALLY RELEASE this COA for ${r.productName}?`)) {
+                                                                dispatch({ type: 'UPDATE_COA_RECORD', payload: { ...r, status: 'Released' } });
+                                                                toast.success('COA Officially Released by QA');
+                                                            }
+                                                        } 
+                                                    }
+                                                ] : [])
+                                            ]}
+                                        />
                                         {!canModify && !canDelete && (
-                                          <span className="text-[9px] text-slate-400 flex items-center gap-1"><Lock className="h-3 w-3" /> Read Only</span>
+                                            <span className="text-[9px] text-slate-400 flex items-center gap-1"><Lock className="h-3 w-3" /> Read Only</span>
                                         )}
                                     </div>
                                 </td>
@@ -664,6 +663,7 @@ export function COAManagerPage() {
                             <div className="flex justify-between border-b border-dotted pb-1"><strong>Strength:</strong> <span>{selectedCOA.strength}</span></div>
                             <div className="flex justify-between border-b border-dotted pb-1"><strong>Dosage Form:</strong> <span>{selectedCOA.dosageForm}</span></div>
                             <div className="flex justify-between border-b border-dotted pb-1"><strong>Manufacturing Date:</strong> <span>{selectedCOA.manufacturingDate}</span></div>
+                            <div className="flex justify-between border-b border-dotted pb-1"><strong>Analysis Date:</strong> <span>{selectedCOA.analysisDate || '-'}</span></div>
                             <div className="flex justify-between border-b border-dotted pb-1"><strong>Expiry Date:</strong> <span>{selectedCOA.expiryDate}</span></div>
                             <div className="flex justify-between border-b border-dotted pb-1"><strong>Issue Date:</strong> <span>{selectedCOA.issueDate}</span></div>
                         </div>

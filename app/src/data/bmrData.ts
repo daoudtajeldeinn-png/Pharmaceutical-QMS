@@ -40,6 +40,12 @@ export interface BatchRecord {
     status: 'Issuance' | 'Manufacturing' | 'Quarantine' | 'Released' | 'Rejected';
     issuanceDate: string;
     issuedBy: string;
+    lineClearance?: {
+        areaFree: boolean;
+        calibrationValid: boolean;
+        rmAvailability: boolean;
+        qaReleased: boolean;
+    };
     stepExecutions: BMRStepExecution[];
     materialVerifications?: MaterialVerification[];
     ingredients?: BatchIngredient[];

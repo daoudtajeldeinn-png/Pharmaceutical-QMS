@@ -84,6 +84,18 @@ function serializeForSupabase(item: Record<string, unknown>, tableName?: string)
         delete cleanItem.batchNumber;
     }
 
+    // Fix activities 400 error (reserved words or missing columns in Supabase)
+    if (tableName === 'activities') {
+        if ('user' in cleanItem) {
+            cleanItem.user_id = cleanItem.user;
+            delete cleanItem.user;
+        }
+        if ('timestamp' in cleanItem) {
+            cleanItem.created_at = cleanItem.timestamp;
+            delete cleanItem.timestamp;
+        }
+    }
+
     return cleanItem;
 }
 
