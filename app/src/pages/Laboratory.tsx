@@ -65,6 +65,76 @@ export function LaboratoryPage() {
   const [, setIsStandardFormOpen] = useState(false);
   const [reagentGrade, setReagentGrade] = useState('');
   const [reagentUnit, setReagentUnit] = useState('');
+  
+  // Reagent Registration Form States
+  const [reagentName, setReagentName] = useState('');
+  const [reagentCas, setReagentCas] = useState('');
+  const [reagentManufacturer, setReagentManufacturer] = useState('');
+  const [reagentQuantity, setReagentQuantity] = useState('');
+  const [reagentExpiry, setReagentExpiry] = useState('');
+
+  const handleSaveReagent = () => {
+    if (!reagentName.trim()) {
+      toast.error('Reagent Name is required');
+      return;
+    }
+    if (!reagentExpiry) {
+      toast.error('Expiry Date is required');
+      return;
+    }
+    const qty = parseFloat(reagentQuantity);
+    if (isNaN(qty) || qty < 0) {
+      toast.error('Please enter a valid net quantity (0 or greater)');
+      return;
+    }
+
+    const expiryDateObj = new Date(reagentExpiry);
+    const isExpired = expiryDateObj.getTime() < Date.now();
+    let status: 'Available' | 'Low_Stock' | 'Expired' | 'Depleted' = 'Available';
+
+    if (qty === 0) {
+      status = 'Depleted';
+    } else if (isExpired) {
+      status = 'Expired';
+    } else if (qty < 5) {
+      status = 'Low_Stock';
+    }
+
+    const newReagent = {
+      id: `reagent-${Math.random().toString(36).substring(2, 9)}`,
+      name: reagentName.trim(),
+      casNumber: reagentCas.trim() || undefined,
+      grade: (reagentGrade || 'Reagent') as any,
+      manufacturer: reagentManufacturer.trim() || 'Merck',
+      supplier: reagentManufacturer.trim() || 'Merck',
+      batchNumber: `BAT-${Math.floor(100000 + Math.random() * 900000)}`,
+      quantity: qty,
+      unit: reagentUnit || 'bottle',
+      storageConditions: 'Room Temperature (20-25°C)',
+      expiryDate: expiryDateObj,
+      dateReceived: new Date(),
+      location: 'Lab Shelf B',
+      safetyInfo: { hazardStatements: [], precautionaryStatements: [] },
+      status
+    };
+
+    dispatch({
+      type: 'ADD_CHEMICAL_REAGENT',
+      payload: newReagent
+    });
+
+    toast.success(`Successfully registered reagent: ${newReagent.name}`);
+    setIsReagentFormOpen(false);
+
+    // Reset Form Fields
+    setReagentName('');
+    setReagentCas('');
+    setReagentGrade('');
+    setReagentManufacturer('');
+    setReagentQuantity('');
+    setReagentUnit('');
+    setReagentExpiry('');
+  };
 
   const gradeOptions = [
     { value: 'ACS', label: 'ACS Grade' },
@@ -467,11 +537,19 @@ export function LaboratoryPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Reagent Name *</Label>
-                <Input placeholder="e.g. Acetonitrile HPLC Grade" />
+                <Input
+                  placeholder="e.g. Acetonitrile HPLC Grade"
+                  value={reagentName}
+                  onChange={(e) => setReagentName(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>CAS Number Identification</Label>
-                <Input placeholder="e.g. 75-05-8" />
+                <Input
+                  placeholder="e.g. 75-05-8"
+                  value={reagentCas}
+                  onChange={(e) => setReagentCas(e.target.value)}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -489,13 +567,22 @@ export function LaboratoryPage() {
               </div>
               <div className="space-y-2">
                 <Label>Manufacturer / Supplier</Label>
-                <Input placeholder="e.g. Merck / Sigma" />
+                <Input
+                  placeholder="e.g. Merck / Sigma"
+                  value={reagentManufacturer}
+                  onChange={(e) => setReagentManufacturer(e.target.value)}
+                />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Net Quantity</Label>
-                <Input type="number" placeholder="0.00" />
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={reagentQuantity}
+                  onChange={(e) => setReagentQuantity(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>UOM</Label>
@@ -511,13 +598,17 @@ export function LaboratoryPage() {
               </div>
               <div className="space-y-2">
                 <Label>Expiry Date *</Label>
-                <Input type="date" />
+                <Input
+                  type="date"
+                  value={reagentExpiry}
+                  onChange={(e) => setReagentExpiry(e.target.value)}
+                />
               </div>
             </div>
           </div>
           <div className="flex justify-end gap-3 bg-slate-50 -mx-6 -mb-6 p-6 mt-4 border-t">
             <Button variant="outline" onClick={() => setIsReagentFormOpen(false)}>Cancel</Button>
-            <Button onClick={() => setIsReagentFormOpen(false)} className="bg-indigo-600 px-8">Save Inventory</Button>
+            <Button onClick={handleSaveReagent} className="bg-indigo-600 px-8">Save Inventory</Button>
           </div>
         </DialogContent>
       </Dialog>
